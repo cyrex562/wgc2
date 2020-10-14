@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cargo",
+            "subcommand": "build",
+            "problemMatcher": [
+                "$rustc"
+            ],
+            "group": "build",
+            "label": "Rust: cargo build - tlsfp"
+        }
+        // {
+        //     "type":"shell",
+        //     "label": "allow pcap on built process",
+        //     "command": "sudo",
+        //     "args": [
+        //         "setcap",
+        //         "cap_net_raw,cap_net_admin=eip",
+        //         "${workspaceFolder}/target/debug/tlsfp"
+        //     ]
+        // }
+    ]
+}

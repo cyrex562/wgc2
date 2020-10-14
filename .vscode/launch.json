@@ -1,0 +1,24 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "debug 1 linux",
+            "program": "${workspaceFolder}/target/debug/wgc2",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            // "preLaunchTask": "allow pcap on built process",
+            "env": {"RUST_BACKTRACE": "1"}
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "debug 1 win",
+            "program": "${workspaceFolder}/target/debug/wgc2.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {"RUST_BACKTRACE": "1"}
+        }
+    ]
+}
