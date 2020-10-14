@@ -1,11 +1,19 @@
 mod utils;
 mod multi_error;
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, error, middleware, HttpRequest, Error};
+use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, error, middleware, Error};
 
 use std::process::Command;
 use crate::utils::setup_logger;
 use crate::multi_error::MultiError;
+use clap::{ArgMatches, Arg};
+
+
+#[derive(Debug, Clone, Default)]
+pub struct AppContext {
+    pub bind_address: String,
+    pub port: u16,
+}
 
 
 fn run_command(command: &str, args: &Vec<&str>) -> Result<String, MultiError> {
@@ -60,7 +68,7 @@ async fn wg_show_interfaces() -> Result<HttpResponse, Error> {
 }
 
 #[get("/show/{interface}")]
-async fn wg_show_interface(path: web::Path<(String)>) -> Result<HttpResponse, Error> {
+async fn wg_show_interface(path: web::Path<String>) -> Result<HttpResponse, Error> {
     let out = match run_command("wg", &vec!["show", path.as_str()]) {
         Ok(x) => x,
         Err(e) => {
@@ -86,10 +94,51 @@ async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> Result<HttpRe
     Ok(HttpResponse::Ok().json(out))
 }
 
+fn setup_arg_matches<'a>() -> ArgMatches<'a> {
+    clap::App::new("wgc2")
+        .version("")
+        .author("xyz")
+        .about("")
+    // ip address to bind to
+    .arg(Arg::with_name("bind_address")
+        .long("address")
+        .short("a")
+        .help("address to bind to")
+        .takes_value(true)
+        .value_name("BIND ADDRESS"))
+    .arg(Arg::with_name("listen_port")
+        .long("port")
+        .short("p")
+        .help("port to listen on")
+        .takes_value(true)
+        .value_name("PORT NUMBER"))
+    .get_matches()
+}
 
+pub fn parse_cmd_line() -> Result<AppContext, MultiError> {
+    let cmd_line = setup_arg_matches();
+    let mut app_ctx: AppContext = Default::default();
+    let mut bind_address: String = String::from("127.0.0.1");
+    if cmd_line.is_present("bind_address") {
+        let bind_addr_str = cmd_line.value_of("bind_address").unwrap();
+        bind_address = bind_addr_str.to_string();
+    }
+    app_ctx.bind_address = bind_address;
+    let mut port: u16 = 8080;
+    if cmd_line.is_present("listen_port") {
+        let port_str = cmd_line.value_of("listen_port").unwrap();
+        port = port_str.parse::<u16>()?;
+    }
+    app_ctx.port = port;
+
+    Ok(app_ctx)
+}
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> std::result::Result<(), MultiError> {
+    let app_ctx = parse_cmd_line()?;
+    let listen_addr = format!("{}:{}", app_ctx.bind_address, app_ctx.port);
+
     setup_logger().unwrap();
 
     HttpServer::new(|| {
@@ -103,7 +152,9 @@ async fn main() -> std::io::Result<()> {
                     .service(wg_show_ifc_element))
                 // web::resource("api/v1/wg/show").route(web::get().to(wg_show)))
     })
-        .bind("127.0.0.1:8080")?
+        .bind(listen_addr.as_str())?
         .run()
-        .await
+        .await?;
+
+    Ok(())
 }
