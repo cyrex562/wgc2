@@ -94,6 +94,20 @@ async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> Result<HttpRe
     Ok(HttpResponse::Ok().json(out))
 }
 
+#[get("/showconf/{interface}")]
+async fn wg_showconf_ifc(path: web::Path<String>) -> Result<HttpResponse, Error> {
+    let path = path.into_inner();
+    let out = match run_command("wg", &vec!["showconf", &path]) {
+        Ok(x) => x,
+        Err(e) => {
+            log::error!("failed to run wg showconf {}: {}", path, e.to_string());
+            return Err(error::ErrorInternalServerError("failed to run wg showconf"));
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(out))
+}
+
 fn setup_arg_matches<'a>() -> ArgMatches<'a> {
     clap::App::new("wgc2")
         .version("")
@@ -149,8 +163,8 @@ async fn main() -> std::result::Result<(), MultiError> {
                     .service(wg_show)
                     .service(wg_show_interfaces)
                     .service(wg_show_interface)
-                    .service(wg_show_ifc_element))
-                // web::resource("api/v1/wg/show").route(web::get().to(wg_show)))
+                    .service(wg_show_ifc_element)
+                    .service(wg_showconf_ifc))
     })
         .bind(listen_addr.as_str())?
         .run()
