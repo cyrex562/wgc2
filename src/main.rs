@@ -108,6 +108,19 @@ async fn wg_showconf_ifc(path: web::Path<String>) -> Result<HttpResponse, Error>
     Ok(HttpResponse::Ok().json(out))
 }
 
+#[get("/genkey")]
+async fn wg_genkey() -> Result<HttpResponse, Error> {
+    let out = match run_command("wg", &vec!["genkey"]) {
+        Ok(x) => x,
+        Err(e) => {
+            log::error!("failed to run wg genkey: {}", e.to_string());
+            return Err(error::ErrorInternalServerError("failed to run wg genkey"));
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(out))
+}
+
 fn setup_arg_matches<'a>() -> ArgMatches<'a> {
     clap::App::new("wgc2")
         .version("")
@@ -164,7 +177,8 @@ async fn main() -> std::result::Result<(), MultiError> {
                     .service(wg_show_interfaces)
                     .service(wg_show_interface)
                     .service(wg_show_ifc_element)
-                    .service(wg_showconf_ifc))
+                    .service(wg_showconf_ifc)
+                    .service(wg_genkey))
     })
         .bind(listen_addr.as_str())?
         .run()
