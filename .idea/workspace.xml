@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="553c4fab-1330-4a3a-8641-a7953f2e8bc2" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,7 +22,7 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="JupyterTrust" id="918d2539-2bad-48e7-9696-f37dc87ba809" />
+  <component name="JupyterTrust" id="30a82308-848d-45d1-86cc-fca4c93bef43" />
   <component name="MacroExpansionManager">
     <option name="directoryName" value="cs9zueu6" />
   </component>
@@ -36,6 +35,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -64,20 +64,10 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-      <option name="channel" value="DEFAULT" />
-      <option name="command" value="run" />
-      <option name="allFeatures" value="false" />
-      <option name="emulateTerminal" value="false" />
-      <option name="backtrace" value="SHORT" />
-      <envs />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
+    <option name="version" value="2" />
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -88,6 +78,8 @@
       <option name="presentableId" value="Default" />
       <updated>1602686717439</updated>
       <workItem from="1602686719043" duration="16008000" />
+      <workItem from="1602767219105" duration="415000" />
+      <workItem from="1602767643079" duration="702000" />
     </task>
     <servers />
   </component>
@@ -119,5 +111,9 @@
       <screen x="0" y="0" width="5120" height="1400" />
     </state>
     <state x="3477" y="356" key="SettingsEditor/0.0.5120.1400@0.0.5120.1400" timestamp="1602689412217" />
+    <state x="2321" y="529" key="cloudConfig.PluginsDialog" timestamp="1602767589956">
+      <screen x="0" y="0" width="5120" height="1364" />
+    </state>
+    <state x="2321" y="529" key="cloudConfig.PluginsDialog/0.0.5120.1364@0.0.5120.1364" timestamp="1602767589956" />
   </component>
 </project>
