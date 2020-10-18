@@ -1,5 +1,6 @@
 mod utils;
 mod multi_error;
+mod wg_support;
 
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder, error, middleware, Error};
 
