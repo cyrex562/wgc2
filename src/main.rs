@@ -82,16 +82,7 @@ async fn wg_show_interfaces() -> Result<HttpResponse, Error> {
         }
     };
 
-    let interfaces = match parse_wg_show_output(out.as_str()) {
-        Ok(x) => x,
-        Err(e) => {
-            log::error!("failed to aprse output: {}", e.to_string());
-            return Err(error::ErrorInternalServerError("failed to parse output"));
-        }
-    };
-    let result = interfaces[0].clone();
-
-    Ok(HttpResponse::Ok().json(result))
+    Ok(HttpResponse::Ok().json(out))
 }
 
 #[get("/show/{interface}")]
@@ -106,7 +97,16 @@ async fn wg_show_interface(path: web::Path<String>) -> Result<HttpResponse, Erro
         }
     };
 
-    Ok(HttpResponse::Ok().json(out))
+    let interfaces = match parse_wg_show_output(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            log::error!("failed to aprse output: {}", e.to_string());
+            return Err(error::ErrorInternalServerError("failed to parse output"));
+        }
+    };
+    let result = interfaces[0].clone();
+
+    Ok(HttpResponse::Ok().json(result))
 }
 
 #[get("/show/{interface}/{element}")]
