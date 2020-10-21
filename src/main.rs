@@ -6,7 +6,9 @@ use actix_web::{error, get, middleware, web, App, Error, HttpResponse, HttpServe
 
 use crate::multi_error::MultiError;
 use crate::utils::setup_logger;
-use crate::wg_support::{parse_wg_show_output, WgShowAll};
+use crate::wg_support::{
+    parse_wg_show_interfaces, parse_wg_show_output, WgShowAll, WgShowInterfaces,
+};
 use clap::{Arg, ArgMatches};
 use std::process::Command;
 
@@ -82,7 +84,17 @@ async fn wg_show_interfaces() -> Result<HttpResponse, Error> {
         }
     };
 
-    Ok(HttpResponse::Ok().json(out))
+    let interfaces = match parse_wg_show_interfaces(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            log::error!("failed to parse output: {}", e.to_string());
+            return Err(error::ErrorInternalServerError("failed to parse output"));
+        }
+    };
+
+    let result = WgShowInterfaces { interfaces };
+
+    Ok(HttpResponse::Ok().json(result))
 }
 
 #[get("/show/{interface}")]

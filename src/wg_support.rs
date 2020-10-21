@@ -23,6 +23,19 @@ pub struct WgShowAll {
     pub interfaces: Vec<WgInterface>,
 }
 
+#[derive(Default, Clone, Debug, Deserialize, Serialize)]
+pub struct WgShowInterfaces {
+    pub interfaces: Vec<String>,
+}
+
+pub fn parse_wg_show_interfaces(output: &str) -> Result<Vec<String>, MultiError> {
+    let mut out: Vec<String> = Vec::new();
+    for item in output.split_whitespace() {
+        out.push(String::from(item));
+    }
+    Ok(out)
+}
+
 pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError> {
     let mut out: Vec<WgInterface> = Vec::new();
 
