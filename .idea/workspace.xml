@@ -23,8 +23,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="553c4fab-1330-4a3a-8641-a7953f2e8bc2" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/wg_support.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/wg_support.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

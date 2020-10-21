@@ -26,7 +26,10 @@ pub struct WgShowAll {
 pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError> {
     let mut out: Vec<WgInterface> = Vec::new();
 
-    for ifc_raw in output.split("interface: ") {
+    for ifc_raw in output.trim().split("interface: ") {
+        if ifc_raw.is_empty() {
+            continue;
+        }
         let mut ifc: WgInterface = Default::default();
         for ele in ifc_raw.split("peer: ") {
             if ele.find("listening port").is_some() {
