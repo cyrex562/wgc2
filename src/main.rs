@@ -44,7 +44,7 @@ async fn default_route() -> impl Responder {
 
 #[get("/show")]
 async fn wg_show() -> Result<HttpResponse, Error> {
-    let wg_show_out = match run_command("wg", &vec!["show"]) {
+    let out = match run_command("wg", &vec!["show"]) {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to run wg show: {}", e.to_string());
@@ -52,7 +52,9 @@ async fn wg_show() -> Result<HttpResponse, Error> {
         }
     };
 
-    Ok(HttpResponse::Ok().json(wg_show_out))
+    
+
+    Ok(HttpResponse::Ok().json(out))
 }
 
 #[get("/show/interfaces")]
