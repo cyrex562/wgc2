@@ -8,6 +8,7 @@ use std::process::Command;
 use crate::utils::setup_logger;
 use crate::multi_error::MultiError;
 use clap::{ArgMatches, Arg};
+use crate::wg_support::{parse_wg_show_output, WgShowAll};
 
 
 #[derive(Debug, Clone, Default)]
@@ -52,9 +53,16 @@ async fn wg_show() -> Result<HttpResponse, Error> {
         }
     };
 
-    
+    let interfaces = match parse_wg_show_output(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            log::error!("failed to parse output: {}", e.to_string());
+            return Err(error::ErrorInternalServerError("failed to parse output"));
+        }
+    };
+    let result: WgShowAll = WgShowAll { interfaces };
 
-    Ok(HttpResponse::Ok().json(out))
+    Ok(HttpResponse::Ok().json(result))
 }
 
 #[get("/show/interfaces")]
