@@ -7,7 +7,11 @@ use actix_web::{error, get, middleware, web, App, Error, HttpResponse, HttpServe
 use crate::multi_error::MultiError;
 use crate::utils::setup_logger;
 use crate::wg_support::{
-    parse_wg_show_interfaces, parse_wg_show_output, WgShowAll, WgShowInterfaces,
+    parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
+    parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port,
+    parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive,
+    parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key,
+    parse_wg_show_transfer, WgShowAll, WgShowInterfaces,
 };
 use clap::{Arg, ArgMatches};
 use std::process::Command;
@@ -139,7 +143,130 @@ async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> Result<HttpRe
         }
     };
 
-    Ok(HttpResponse::Ok().json(out))
+    // wg show {ifc} public-key | private-key | listen-port | fwmark | peers | preshared-keys | endpoints | allowed-ips | latest-handshakes | persistent-keepalive | transfer
+    // public-key
+    if &path.1 == "public-key" {
+        let result = match parse_wg_show_pub_key(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // private-key
+    else if &path.1 == "private-key" {
+        let result = match parse_wg_show_pvt_key(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // listen-port
+    else if &path.1 == "listen-port" {
+        let result = match parse_wg_show_listen_port(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // fwmark
+    else if &path.1 == "fwmark" {
+        let result = match parse_wg_show_fwmark(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // peers
+    else if &path.1 == "peers" {
+        let result = match parse_wg_show_peers(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // preshared-keys
+    else if &path.1 == "preshared-keys" {
+        let result = match parse_wg_show_preshared_keys(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // endpoints
+    else if &path.1 == "endpoints" {
+        let result = match parse_wg_show_endpoints(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // allowed-ips
+    else if &path.1 == "allowed-ips" {
+        let result = match parse_wg_show_allowed_ips(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // latest-handshakes
+    else if &path.1 == "latest-handshakes" {
+        let result = match parse_wg_show_latest_handshakes(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // persistent-keepalive
+    else if &path.1 == "persistent-keepalive" {
+        let result = match parse_wg_show_persistent_keepalive(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    }
+    // transfer
+    else if &path.1 == "transfer" {
+        let result = match parse_wg_show_transfer(out.as_str()) {
+            Ok(x) => x,
+            Err(e) => {
+                log::error!("failed to parse output: {}", e.to_string());
+                return Err(error::ErrorInternalServerError("failed to parse output"));
+            }
+        };
+        Ok(HttpResponse::Ok().json(result))
+    } else {
+        Err(error::ErrorBadRequest("invalid wg show request"))
+    }
 }
 
 #[get("/showconf/{interface}")]
