@@ -15,12 +15,12 @@ pub struct WgInterface {
     pub public_key: String,
     pub private_key: String,
     pub listening_port: u16,
-    pub peers: Vec<WgPeer>
+    pub peers: Vec<WgPeer>,
 }
 
 #[derive(Default, Clone, Debug, Deserialize, Serialize)]
 pub struct WgShowAll {
-    pub interfaces: Vec<WgInterface>
+    pub interfaces: Vec<WgInterface>,
 }
 
 pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError> {
@@ -74,7 +74,8 @@ pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError
                     }
                     // persistent keepalive
                     else if line.find("persistent keepalive").is_some() {
-                        let keepalive_str = line.trim().strip_prefix("persistent keepalive: ").unwrap();
+                        let keepalive_str =
+                            line.trim().strip_prefix("persistent keepalive: ").unwrap();
                         peer.persistent_keepalive = keepalive_str.trim().to_string();
                     }
 
@@ -83,7 +84,6 @@ pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError
 
                 ifc.peers.push(peer);
             }
-
         }
 
         out.push(ifc);
