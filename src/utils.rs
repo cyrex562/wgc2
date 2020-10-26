@@ -1,4 +1,8 @@
+use std::process::Command;
+
 use actix_web::{error, Error};
+
+use crate::multi_error::MultiError;
 
 ///
 ///
@@ -20,7 +24,40 @@ pub fn setup_logger() -> Result<(), fern::InitError> {
     Ok(())
 }
 
+///
+///
+///
 pub fn ret_internal_server_error(msg: String) -> Error {
     log::error!("{}", msg);
     error::ErrorInternalServerError(msg)
+}
+
+///
+///
+///
+pub fn run_command(command: &str, args: &Vec<&str>) -> Result<String, MultiError> {
+    let output = Command::new(command)
+        .args(args.as_slice())
+        .output()
+        .expect("failed to execute command");
+
+    let stdout_string = String::from_utf8(output.stdout.clone())?;
+    let stderr_string = String::from_utf8(output.stderr.clone())?;
+
+    log::debug!(
+        "output={:?}, stdout={}, stderr={}",
+        output,
+        stdout_string,
+        stderr_string
+    );
+
+    if !stderr_string.is_empty() {
+        log::error!("failed to execute command: {}", stderr_string);
+        return Err(MultiError {
+            kind: "CommandError".to_string(),
+            message: "failed to execute to command".to_string(),
+        });
+    }
+
+    Ok(stdout_string)
 }

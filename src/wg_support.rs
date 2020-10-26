@@ -335,12 +335,12 @@ pub fn parse_wg_show_transfer(output: &str) -> Result<WgShowTransfer, MultiError
 }
 
 #[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgGenkey {
+pub struct WgKey {
     pub key: String,
 }
 
-pub fn parse_wg_genkey(output: &str) -> Result<WgGenkey, MultiError> {
-    let mut out: WgGenkey = Default::default();
+pub fn parse_wg_genkey(output: &str) -> Result<WgKey, MultiError> {
+    let mut out: WgKey = Default::default();
     out.key.insert_str(0, output.trim());
     Ok(out)
 }
