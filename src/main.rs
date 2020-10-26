@@ -4,9 +4,10 @@ mod wg_support;
 
 use actix_files::NamedFile;
 use actix_web::{error, get, middleware, web, App, Error, HttpResponse, HttpServer, Responder};
+use wg_support::parse_wg_genkey;
 
 use crate::multi_error::MultiError;
-use crate::utils::{setup_logger, ret_internal_server_error};
+use crate::utils::{ret_internal_server_error, setup_logger};
 use crate::wg_support::{
     parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
     parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port,
@@ -15,9 +16,9 @@ use crate::wg_support::{
     parse_wg_show_transfer, WgShowAll, WgShowInterfaces,
 };
 use clap::{Arg, ArgMatches};
+use std::io::Write;
 use std::process::Command;
 use tempfile::NamedTempFile;
-use std::io::{Write};
 
 #[derive(Debug, Clone, Default)]
 pub struct AppContext {
@@ -273,8 +274,8 @@ async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> Result<HttpRe
 }
 
 ///
-/// 
-/// 
+///
+///
 #[get("/showconf/{interface}")]
 async fn wg_showconf_ifc(path: web::Path<String>) -> Result<NamedFile, Error> {
     let path = path.into_inner();
@@ -290,7 +291,9 @@ async fn wg_showconf_ifc(path: web::Path<String>) -> Result<NamedFile, Error> {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to create temp file for download: {}", e.to_string());
-            return Err(error::ErrorInternalServerError("failed to create temp file for download"));
+            return Err(error::ErrorInternalServerError(
+                "failed to create temp file for download",
+            ));
         }
     };
 
@@ -299,7 +302,6 @@ async fn wg_showconf_ifc(path: web::Path<String>) -> Result<NamedFile, Error> {
         Err(e) => {
             let err_msg = format!("failed to write to temp file: {}", e.to_string());
             return Err(ret_internal_server_error(err_msg));
-
         }
     };
 
@@ -328,7 +330,15 @@ async fn wg_genkey() -> Result<HttpResponse, Error> {
         }
     };
 
-    Ok(HttpResponse::Ok().json(out))
+    let result = match parse_wg_genkey(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            let err_msg = format!("failed to parse genkey output: {}", e.to_string());
+            return Err(ret_internal_server_error(err_msg));
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(result))
 }
 
 #[get("/genpsk")]

@@ -1,4 +1,4 @@
-use actix_web::{Error, error};
+use actix_web::{error, Error};
 
 ///
 ///
