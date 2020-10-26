@@ -1,5 +1,16 @@
-use crate::multi_error::MultiError;
+use std::{path::Path, io::Write};
+
+use crate::{
+    iproute2_support::ip_addr_add,
+    iproute2_support::ip_link_add,
+    iproute2_support::ip_link_set_up,
+    multi_error::MultiError,
+    utils::{ret_multi_err, run_command},
+};
 use serde::{Deserialize, Serialize};
+
+const WG_DFLT_LISTEN_PORT: u16 = 51820;
+const WG_LNK_TYPE: &str = "wireguard";
 
 #[derive(Default, Clone, Debug, Deserialize, Serialize)]
 pub struct WgPeer {
@@ -14,7 +25,8 @@ pub struct WgInterface {
     pub name: String,
     pub public_key: String,
     pub private_key: String,
-    pub listening_port: u16,
+    pub listen_port: u16,
+    pub address: String,
     pub peers: Vec<WgPeer>,
 }
 
@@ -63,7 +75,7 @@ pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError
                         let mut port_str = line.trim().strip_prefix("listening port: ").unwrap();
                         port_str = port_str.trim();
                         let port: u16 = port_str.parse::<u16>().unwrap();
-                        ifc.listening_port = port;
+                        ifc.listen_port = port;
                     }
                     line_num += 1
                 }
@@ -345,4 +357,141 @@ pub fn parse_wg_keylike(output: &str) -> Result<WgKey, MultiError> {
     Ok(out)
 }
 
+pub fn create_wg_private_key() -> Result<WgKey, MultiError> {
+    let out = match run_command("wg", &vec!["genkey"], None) {
+        Ok(x) => x,
+        Err(e) => {
+            let msg = format!("failed to run wg genkey: {}", e.to_string());
+            return Err(ret_multi_err(msg));
+        }
+    };
 
+    let result = match parse_wg_keylike(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            let msg = format!("failed to parse genkey output: {}", e.to_string());
+            return Err(ret_multi_err(msg));
+        }
+    };
+
+    Ok(result)
+}
+
+pub fn get_wg_public_key(private_key: &String) -> Result<WgKey, MultiError> {
+    let out = match run_command("wg", &vec!["pubkey"], Some(private_key.clone())) {
+        Ok(x) => x,
+        Err(e) => {
+            let err_msg = format!("failed to run wg pubkey: {}", e.to_string());
+            return Err(ret_multi_err(err_msg));
+        }
+    };
+
+    let result = match parse_wg_keylike(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            let err_msg = format!("failed to parse genkey output: {}", e.to_string());
+            return Err(ret_multi_err(err_msg));
+        }
+    };
+
+    Ok(result)
+}
+
+pub fn ip_link_add_wg(dev_name: &String) -> Result<(), MultiError> {
+    ip_link_add(dev_name, &WG_LNK_TYPE.to_string())?;
+    Ok(())
+}
+
+pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(), MultiError> {
+    let _out = run_command(
+        "wg",
+        &vec!["set", ifc_name, "private-key"],
+        Some(private_key.clone()),
+    )?;
+    Ok(())
+}
+
+pub fn wg_set_listen_port(ifc_name: &String, listen_port: &String) -> Result<(), MultiError> {
+    let _out = run_command(
+        "wg",
+        &vec!["set", ifc_name, "listen-port", listen_port],
+        None,
+    )?;
+    Ok(())
+}
+
+pub fn wg_showconf(ifc_name: &String) -> Result<String, MultiError> {
+    let out = match run_command("wg", &vec!["showconf", ifc_name], None) {
+        Ok(x) => x,
+        Err(e) => {
+            let msg = format!("failed to run wg showconf: {}", e.to_string());
+            return Err(ret_multi_err(msg));
+        }
+    };
+
+    Ok(out)
+}
+
+#[derive(Default, Clone, Debug, Serialize, Deserialize)]
+pub struct WgCreateInterfaceRequest {
+    pub ifc_name: String,
+    pub address: String,
+    pub listen_port: u16,
+    pub set_link_up: bool,
+    pub persist: bool,
+}
+
+///
+/// 
+/// 
+pub fn create_wg_interface(
+    ifc_name: &String,
+    address: &String,
+    listen_port: Option<u16>,
+    set_link_up: bool,
+    persist: bool,
+) -> Result<WgInterface, MultiError> {
+    // todo: check if interface already exists
+    // todo: check if address already exists
+    // todo: check if something is already listening on that port
+    // todo: validate that the given address conforms to A.B.C.D/E
+    let mut out: WgInterface = Default::default();
+    // set interface name
+    out.name = ifc_name.clone();
+    // create a private key
+    out.private_key = create_wg_private_key()?.key;
+    // create a public key
+    out.public_key = get_wg_public_key(&out.private_key)?.key;
+    // set listen port
+    if listen_port.is_some() {
+        out.listen_port = listen_port.unwrap();
+    } else {
+        out.listen_port = WG_DFLT_LISTEN_PORT;
+    }
+    // set address
+    out.address = address.clone();
+    // create new interface with ip link
+    ip_link_add_wg(&out.name)?;
+    // add address to interface
+    ip_addr_add(&out.name, &out.address)?;
+    // set private key
+    wg_set_private_key(&out.name, &out.private_key)?;
+    // set listen port
+    let listen_port_string: String = format!("{}", &out.listen_port);
+    wg_set_listen_port(&out.name, &listen_port_string)?;
+    // set link up
+    if set_link_up {
+        ip_link_set_up(&out.name)?
+    }
+    // persist by saving config and setting up service with wg quick
+    if persist {
+        let conf = wg_showconf(&out.name)?;
+        let dev_file_path_str = format!("/etc/wireguard/{}.conf", &out.name);
+        let dev_file_path = Path::new(dev_file_path_str.as_str());
+        let mut def_file = std::fs::File::create(dev_file_path)?;
+        let _bytes_written = def_file.write_all(conf.as_bytes())?;
+        let svc_name = format!("wg_quick@{}.service", &out.name);
+        let _svc_enable_out = run_command("systemctl", &vec!["enable", svc_name.as_str()], None)?;
+    }
+    Ok(out)
+}
