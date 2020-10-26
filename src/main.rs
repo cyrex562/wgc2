@@ -273,26 +273,13 @@ async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> Result<HttpRe
 }
 
 #[get("/showconf/{interface}")]
-async fn wg_showconf_ifc(path: web::Path<String>) -> Result<HttpResponse, Error> {
+async fn wg_showconf_ifc(path: web::Path<String>) -> Result<NamedFile, Error> {
     let path = path.into_inner();
     let out = match run_command("wg", &vec!["showconf", &path]) {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to run wg showconf {}: {}", path, e.to_string());
             return Err(error::ErrorInternalServerError("failed to run wg showconf"));
-        }
-    };
-
-    Ok(HttpResponse::Ok().json(out))
-}
-
-#[get("/genkey")]
-async fn wg_genkey() -> Result<NamedFile, Error> {
-    let out = match run_command("wg", &vec!["genkey"]) {
-        Ok(x) => x,
-        Err(e) => {
-            log::error!("failed to run wg genkey: {}", e.to_string());
-            return Err(error::ErrorInternalServerError("failed to run wg genkey"));
         }
     };
 
@@ -326,6 +313,19 @@ async fn wg_genkey() -> Result<NamedFile, Error> {
     };
 
     Ok(named_file)
+}
+
+#[get("/genkey")]
+async fn wg_genkey() -> Result<HttpResponse, Error> {
+    let out = match run_command("wg", &vec!["genkey"]) {
+        Ok(x) => x,
+        Err(e) => {
+            log::error!("failed to run wg genkey: {}", e.to_string());
+            return Err(error::ErrorInternalServerError("failed to run wg genkey"));
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(out))
 }
 
 #[get("/genpsk")]
