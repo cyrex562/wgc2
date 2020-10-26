@@ -1,3 +1,5 @@
+use actix_web::{Error, error};
+
 ///
 ///
 ///
@@ -16,4 +18,9 @@ pub fn setup_logger() -> Result<(), fern::InitError> {
         .chain(std::io::stdout())
         .apply()?;
     Ok(())
+}
+
+pub fn ret_internal_server_error(msg: String) -> Error {
+    log::error!("{}", msg);
+    error::ErrorInternalServerError(msg)
 }

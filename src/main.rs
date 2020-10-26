@@ -2,10 +2,11 @@ mod multi_error;
 mod utils;
 mod wg_support;
 
+use actix_files::NamedFile;
 use actix_web::{error, get, middleware, web, App, Error, HttpResponse, HttpServer, Responder};
 
 use crate::multi_error::MultiError;
-use crate::utils::setup_logger;
+use crate::utils::{setup_logger, ret_internal_server_error};
 use crate::wg_support::{
     parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
     parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port,
@@ -15,6 +16,8 @@ use crate::wg_support::{
 };
 use clap::{Arg, ArgMatches};
 use std::process::Command;
+use tempfile::NamedTempFile;
+use std::io::{Write};
 
 #[derive(Debug, Clone, Default)]
 pub struct AppContext {
@@ -284,7 +287,7 @@ async fn wg_showconf_ifc(path: web::Path<String>) -> Result<HttpResponse, Error>
 }
 
 #[get("/genkey")]
-async fn wg_genkey() -> Result<HttpResponse, Error> {
+async fn wg_genkey() -> Result<NamedFile, Error> {
     let out = match run_command("wg", &vec!["genkey"]) {
         Ok(x) => x,
         Err(e) => {
@@ -293,7 +296,36 @@ async fn wg_genkey() -> Result<HttpResponse, Error> {
         }
     };
 
-    Ok(HttpResponse::Ok().json(out))
+    let mut file = match NamedTempFile::new() {
+        Ok(x) => x,
+        Err(e) => {
+            log::error!("failed to create temp file for download: {}", e.to_string());
+            return Err(error::ErrorInternalServerError("failed to create temp file for download"));
+        }
+    };
+
+    match file.write(out.as_bytes()) {
+        Ok(_) => (),
+        Err(e) => {
+            let err_msg = format!("failed to write to temp file: {}", e.to_string());
+            return Err(ret_internal_server_error(err_msg));
+
+        }
+    };
+
+    let mut fpath: String = String::new();
+    fpath.push_str(&file.path().to_str().unwrap());
+    let out_file = file.into_file();
+
+    let named_file = match NamedFile::from_file(out_file, fpath) {
+        Ok(x) => x,
+        Err(e) => {
+            let err_msg = format!("failed to get named file: {}", e.to_string());
+            return Err(ret_internal_server_error(err_msg));
+        }
+    };
+
+    Ok(named_file)
 }
 
 #[get("/genpsk")]

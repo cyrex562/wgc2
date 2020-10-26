@@ -8,7 +8,7 @@
                 "$rustc"
             ],
             "group": "build",
-            "label": "Rust: cargo build - tlsfp"
+            "label": "Rust: cargo build"
         }
         // {
         //     "type":"shell",
