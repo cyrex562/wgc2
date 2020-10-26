@@ -272,6 +272,9 @@ async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> Result<HttpRe
     }
 }
 
+///
+/// 
+/// 
 #[get("/showconf/{interface}")]
 async fn wg_showconf_ifc(path: web::Path<String>) -> Result<NamedFile, Error> {
     let path = path.into_inner();
