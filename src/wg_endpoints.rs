@@ -4,19 +4,10 @@ use actix_files::NamedFile;
 use actix_web::{error, web, HttpResponse, Responder};
 use tempfile::NamedTempFile;
 
-use crate::{
-    utils::{ret_internal_server_error, run_command},
-    wg_support::{
-        parse_wg_genkey, parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
-        parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port,
-        parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive,
-        parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key,
-        parse_wg_show_transfer, WgShowAll, WgShowInterfaces,
-    },
-};
+use crate::{utils::{ret_internal_server_error, run_command}, wg_support::{WgKey, WgShowAll, WgShowInterfaces, parse_wg_keylike, parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark, parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port, parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive, parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key, parse_wg_show_transfer}};
 
 pub async fn wg_show() -> impl Responder {
-    let out = match run_command("wg", &vec!["show"]) {
+    let out = match run_command("wg", &vec!["show"], None) {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to run wg show: {}", e.to_string());
@@ -37,7 +28,7 @@ pub async fn wg_show() -> impl Responder {
 }
 
 pub async fn wg_show_interfaces() -> impl Responder {
-    let out = match run_command("wg", &vec!["show", "interfaces"]) {
+    let out = match run_command("wg", &vec!["show", "interfaces"], None) {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to run wg show interfaces: {}", e.to_string());
@@ -61,7 +52,7 @@ pub async fn wg_show_interfaces() -> impl Responder {
 }
 
 pub async fn wg_show_interface(path: web::Path<String>) -> impl Responder {
-    let out = match run_command("wg", &vec!["show", path.as_str()]) {
+    let out = match run_command("wg", &vec!["show", path.as_str()], None) {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to run wg show {}: {}", path, e.to_string());
@@ -85,7 +76,7 @@ pub async fn wg_show_interface(path: web::Path<String>) -> impl Responder {
 
 pub async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> impl Responder {
     let path = path.into_inner();
-    let out = match run_command("wg", &vec!["show", &path.0, &path.1]) {
+    let out = match run_command("wg", &vec!["show", &path.0, &path.1], None) {
         Ok(x) => x,
         Err(e) => {
             log::error!(
@@ -231,7 +222,7 @@ pub async fn wg_show_ifc_element(path: web::Path<(String, String)>) -> impl Resp
 ///
 pub async fn wg_showconf_ifc(path: web::Path<String>) -> impl Responder {
     let path = path.into_inner();
-    let out = match run_command("wg", &vec!["showconf", &path]) {
+    let out = match run_command("wg", &vec!["showconf", &path], None) {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to run wg showconf {}: {}", path, e.to_string());
@@ -273,7 +264,7 @@ pub async fn wg_showconf_ifc(path: web::Path<String>) -> impl Responder {
 }
 
 pub async fn wg_genkey() -> impl Responder {
-    let out = match run_command("wg", &vec!["genkey"]) {
+    let out = match run_command("wg", &vec!["genkey"], None) {
         Ok(x) => x,
         Err(e) => {
             log::error!("failed to run wg genkey: {}", e.to_string());
@@ -281,7 +272,7 @@ pub async fn wg_genkey() -> impl Responder {
         }
     };
 
-    let result = match parse_wg_genkey(out.as_str()) {
+    let result = match parse_wg_keylike(out.as_str()) {
         Ok(x) => x,
         Err(e) => {
             let err_msg = format!("failed to parse genkey output: {}", e.to_string());
@@ -296,7 +287,7 @@ pub async fn wg_genkey() -> impl Responder {
 ///
 ///
 pub async fn wg_genpsk() -> impl Responder {
-    let out = match run_command("wg", &vec!["genpsk"]) {
+    let out = match run_command("wg", &vec!["genpsk"], None) {
         Ok(x) => x,
         Err(e) => {
             let err_msg = format!("failed run wg genpsk: {}", e.to_string());
@@ -304,7 +295,7 @@ pub async fn wg_genpsk() -> impl Responder {
         }
     };
 
-    let result = match parse_wg_genkey(out.as_str()) {
+    let result = match parse_wg_keylike(out.as_str()) {
         Ok(x) => x,
         Err(e) => {
             let err_msg = format!("failed to parse genkey output: {}", e.to_string());
@@ -313,4 +304,29 @@ pub async fn wg_genpsk() -> impl Responder {
     };
 
     Ok(HttpResponse::Ok().json(result))
+}
+
+///
+/// 
+/// 
+pub async fn wg_pubkey(req: web::Json<WgKey>) -> impl Responder {
+    let in_key = req.key.clone();
+    let out = match run_command("wg", &vec!["pubkey"], Some(in_key)) {
+        Ok(x) => x,
+        Err(e) => {
+            let err_msg = format!("failed to run wg pubkey: {}", e.to_string());
+            return Err(ret_internal_server_error(err_msg));
+        }
+    };
+
+    let result = match parse_wg_keylike(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            let err_msg = format!("failed to parse genkey output: {}", e.to_string());
+            return Err(ret_internal_server_error(err_msg));
+        }
+    };
+
+    Ok(HttpResponse::Ok().json(result))
+
 }

@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{io::Write, process::{Command, Output, Stdio}};
 
 use actix_web::{error, Error};
 
@@ -35,11 +35,23 @@ pub fn ret_internal_server_error(msg: String) -> Error {
 ///
 ///
 ///
-pub fn run_command(command: &str, args: &Vec<&str>) -> Result<String, MultiError> {
-    let output = Command::new(command)
+pub fn run_command(command: &str, args: &Vec<&str>, stdin: Option<String>) -> Result<String, MultiError> {
+
+    let output: Output;
+    if stdin.is_some() {
+        let mut child = Command::new(command)
+            .args(args.as_slice())
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .ok().unwrap();
+        child.stdin.as_mut().unwrap().write_all(stdin.unwrap().as_bytes())?;
+        output = child.wait_with_output()?;
+    } else {
+        output = Command::new(command)
         .args(args.as_slice())
-        .output()
-        .expect("failed to execute command");
+        .output()?;
+    }
 
     let stdout_string = String::from_utf8(output.stdout.clone())?;
     let stderr_string = String::from_utf8(output.stderr.clone())?;

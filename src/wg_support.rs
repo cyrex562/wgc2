@@ -339,8 +339,10 @@ pub struct WgKey {
     pub key: String,
 }
 
-pub fn parse_wg_genkey(output: &str) -> Result<WgKey, MultiError> {
+pub fn parse_wg_keylike(output: &str) -> Result<WgKey, MultiError> {
     let mut out: WgKey = Default::default();
     out.key.insert_str(0, output.trim());
     Ok(out)
 }
+
+
