@@ -11,10 +11,7 @@ use actix_web::{
     App, HttpResponse, HttpServer, Responder,
 };
 use clap::{Arg, ArgMatches};
-use wg_endpoints::{
-    wg_genkey, wg_genpsk, wg_show, wg_show_ifc_element, wg_show_interface, wg_show_interfaces,
-    wg_showconf_ifc,
-};
+use wg_endpoints::{wg_genkey, wg_genpsk, wg_pubkey, wg_show, wg_show_ifc_element, wg_show_interface, wg_show_interfaces, wg_showconf_ifc};
 
 #[derive(Debug, Clone, Default)]
 pub struct AppContext {
@@ -93,8 +90,8 @@ async fn main() -> std::result::Result<(), MultiError> {
                 )
                 .route("/showconf/{interface}", web::get().to(wg_showconf_ifc))
                 .route("/genkey", web::get().to(wg_genkey))
-                .route("/genpsk", web::get().to(wg_genpsk)),
-            // .route("/genpsk", web::post().to(wg_genpsk)),
+                .route("/genpsk", web::get().to(wg_genpsk))
+                .route("/pubkey", web::post().to(wg_pubkey)),
         )
     })
     .bind(listen_addr.as_str())?
