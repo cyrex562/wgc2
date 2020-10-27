@@ -55,6 +55,7 @@ pub fn run_command(
     stdin: Option<String>,
 ) -> Result<String, MultiError> {
     let output: Output;
+    log::debug!("command={}, args={:?}", command, args);
     if stdin.is_some() {
         let mut child = Command::new(command)
             .args(args.as_slice())
