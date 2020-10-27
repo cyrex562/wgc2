@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write, path::Path};
+use std::{fs::{File, OpenOptions}, io::Write, path::Path};
 
 use crate::{
     iproute2_support::ip_addr_add,
@@ -449,6 +449,7 @@ pub fn wg_create_pvt_key_file(
     let pvt_key: String;
 
     if key.is_some() {
+        log::debug!("using key provided in parameter");
         pvt_key = key.unwrap().clone();
     } else {
         pvt_key = create_wg_private_key()?.key;
@@ -459,8 +460,17 @@ pub fn wg_create_pvt_key_file(
     let mut file: File;
     if dev_name.is_some() {
         let file_name = format!("/etc/wireguard/{}.private.key", dev_name.unwrap());
+        log::debug!("trying to open file=\"{}\"", file_name);
         path = file_name.clone();
-        file = File::open(file_name)?;
+        log::debug!("opening file to write key");
+        // file = File::open(file_name)?;
+        file = OpenOptions::new()
+            .read(false)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(file_name)?;
+        log::debug!("writing key to file");
         file.write_all(pvt_key.as_bytes())?;
     } else {
         let mut tmp_file = NamedTempFile::new()?;
