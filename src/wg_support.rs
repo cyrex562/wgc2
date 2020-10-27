@@ -460,9 +460,9 @@ pub fn wg_create_pvt_key_file(
     let mut file: File;
     if dev_name.is_some() {
         let file_name = format!("/etc/wireguard/{}.private.key", dev_name.unwrap());
-        log::debug!("trying to open file=\"{}\"", file_name);
+        // log::debug!("trying to open file=\"{}\"", file_name);
         path = file_name.clone();
-        log::debug!("opening file to write key");
+        // log::debug!("opening file to write key");
         // file = File::open(file_name)?;
         file = OpenOptions::new()
             .read(false)
@@ -470,7 +470,7 @@ pub fn wg_create_pvt_key_file(
             .create(true)
             .truncate(true)
             .open(file_name)?;
-        log::debug!("writing key to file");
+        // log::debug!("writing key to file");
         file.write_all(pvt_key.as_bytes())?;
     } else {
         let mut tmp_file = NamedTempFile::new()?;
