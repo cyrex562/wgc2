@@ -575,7 +575,7 @@ pub fn list_wg_quick_systemd_units() -> Result<Vec<String>, MultiError> {
     let out = run_command(
         "systemctl",
         &vec![
-            "list_units",
+            "list-units",
             "wg-quick*",
             "-t",
             "service",
