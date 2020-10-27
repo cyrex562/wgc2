@@ -7,8 +7,8 @@ use tempfile::NamedTempFile;
 use crate::{
     utils::{ret_internal_server_error, run_command},
     wg_support::{
-        create_wg_interface, create_wg_private_key, gen_wg_public_key, parse_wg_keylike,
-        parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
+        create_wg_interface, create_wg_private_key, delete_wg_interface, gen_wg_public_key,
+        parse_wg_keylike, parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
         parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port,
         parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive,
         parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key,
@@ -347,4 +347,17 @@ pub async fn handle_create_wg_interface(
             }
         };
     Ok(HttpResponse::Ok().json(out))
+}
+
+///
+///
+///
+pub async fn handle_delete_wg_interface(path: web::Path<String>) -> impl Responder {
+    match delete_wg_interface(path.as_str()) {
+        Ok(_) => Ok(HttpResponse::Ok()),
+        Err(e) => {
+            let msg = format!("failed to delete interface: {}", e.to_string());
+            Err(ret_internal_server_error(msg))
+        }
+    }
 }

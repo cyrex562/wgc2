@@ -1,11 +1,20 @@
-use std::{fs::{File, OpenOptions}, io::Write, path::Path};
+use std::{
+    fs::remove_file,
+    fs::{File, OpenOptions},
+    io::Write,
+    path::Path,
+};
 
 use crate::{
     iproute2_support::ip_addr_add,
     iproute2_support::ip_link_add,
+    iproute2_support::ip_link_del,
+    iproute2_support::ip_link_set_down,
     iproute2_support::ip_link_set_up,
     multi_error::MultiError,
-    utils::{ret_multi_err, run_command},
+    utils::daemon_reload_systemd,
+    utils::disable_systemd_service,
+    utils::{rest_failed_systemd, ret_multi_err, run_command, stop_systemd_service},
 };
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
@@ -419,7 +428,11 @@ pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(),
 }
 
 pub fn wg_set_listen_port(ifc_name: &String, listen_port: &String) -> Result<(), MultiError> {
-    log::debug!("setting listen port={} for device={}", listen_port, ifc_name);
+    log::debug!(
+        "setting listen port={} for device={}",
+        listen_port,
+        ifc_name
+    );
     let _out = run_command(
         "wg",
         &vec!["set", ifc_name, "listen-port", listen_port],
@@ -429,7 +442,6 @@ pub fn wg_set_listen_port(ifc_name: &String, listen_port: &String) -> Result<(),
 }
 
 pub fn wg_showconf(ifc_name: &String) -> Result<String, MultiError> {
-    
     let out = match run_command("wg", &vec!["showconf", ifc_name], None) {
         Ok(x) => x,
         Err(e) => {
@@ -502,7 +514,13 @@ pub fn create_wg_interface(
     set_link_up: bool,
     persist: bool,
 ) -> Result<WgInterface, MultiError> {
-    log::debug!("creating wireguard interface: name={}, address={}, set_link_up={:?}, persist={:?}", ifc_name, address, set_link_up, persist);
+    log::debug!(
+        "creating wireguard interface: name={}, address={}, set_link_up={:?}, persist={:?}",
+        ifc_name,
+        address,
+        set_link_up,
+        persist
+    );
     // todo: check if interface already exists
     // todo: check if address already exists
     // todo: check if something is already listening on that port
@@ -546,4 +564,89 @@ pub fn create_wg_interface(
         let _svc_enable_out = run_command("systemctl", &vec!["enable", svc_name.as_str()], None)?;
     }
     Ok(out)
+}
+
+///
+/// systemctl list-units wg-quick* -t service --full --all --plain --no-legend
+/// wg-quick@wg0.service      loaded active exited WireGuard via wg-quick(8) for wg0     
+///
+pub fn list_wg_quick_systemd_units() -> Result<Vec<String>, MultiError> {
+    log::debug!("listing wg-quick systemd units");
+    let out = run_command(
+        "systemctl",
+        &vec![
+            "list_units",
+            "wg-quick*",
+            "-t",
+            "service",
+            "--full",
+            "--all",
+            "--plain",
+            "--no-legend",
+        ],
+        None,
+    )?;
+
+    let mut result: Vec<String> = Vec::new();
+
+    for line in out.lines() {
+        let mut elements = line.split_ascii_whitespace();
+        let service_name = elements.next().unwrap();
+        result.push(service_name.to_string());
+    }
+
+    Ok(result)
+}
+
+pub fn wg_quick_systemd_unit_present(ifc_name: &str) -> Result<bool, MultiError> {
+    log::debug!("checking if systemd unit is present");
+    let wg_quick_units = list_wg_quick_systemd_units()?;
+    let target_unit = format!("wg-quick@{}.service", ifc_name);
+    for unit in wg_quick_units.iter() {
+        if *unit == target_unit {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+///
+///
+///
+pub fn wg_purge_system_unit(ifc_name: &str) -> Result<(), MultiError> {
+    log::debug!("purging systemd unit");
+    let unit = format!("wg-quick@{}.service", ifc_name);
+    stop_systemd_service(unit.as_str())?;
+    disable_systemd_service(unit.as_str())?;
+    daemon_reload_systemd()?;
+    rest_failed_systemd()?;
+    Ok(())
+}
+
+///
+///
+///
+pub fn delete_wg_interface(ifc_name: &str) -> Result<(), MultiError> {
+    log::debug!("deleting interface: name={}", ifc_name);
+
+    // set the link to down
+    ip_link_set_down(ifc_name)?;
+
+    // delete the link
+    ip_link_del(ifc_name)?;
+
+    // if a config file exists, delete it
+    let config_path_string: String = format!("/etc/wireguard/{}.conf", ifc_name);
+    let config_path = Path::new(config_path_string.as_str());
+    if config_path.exists() {
+        remove_file(config_path)?;
+    }
+
+    // if a system service exists stop and disable it
+    if wg_quick_systemd_unit_present(ifc_name)? {
+        wg_purge_system_unit(ifc_name)?;
+    }
+
+    Ok(())
 }

@@ -99,3 +99,23 @@ pub fn run_command(
 
     Ok(stdout_string)
 }
+
+pub fn stop_systemd_service(unit: &str) -> Result<(), MultiError> {
+    let _out = run_command("systemctl", &vec!["stop", unit], None)?;
+    Ok(())
+}
+
+pub fn disable_systemd_service(unit: &str) -> Result<(), MultiError> {
+    let _out = run_command("systemctl", &vec!["disable", unit], None)?;
+    Ok(())
+}
+
+pub fn daemon_reload_systemd() -> Result<(), MultiError> {
+    let _out = run_command("systemctl", &vec!["daemon-reload"], None)?;
+    Ok(())
+}
+
+pub fn rest_failed_systemd() -> Result<(), MultiError> {
+    let _out = run_command("systemctl", &vec!["reset-failed"], None)?;
+    Ok(())
+}
