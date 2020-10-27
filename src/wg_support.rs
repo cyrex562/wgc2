@@ -650,3 +650,35 @@ pub fn delete_wg_interface(ifc_name: &str) -> Result<(), MultiError> {
 
     Ok(())
 }
+
+///
+/// 
+/// 
+pub fn wg_set_fwmark(ifc_name: &str, fwmark: &str) -> Result<(), MultiError> {
+    log::debug!("setting fwmark for interface={} to fwmark={}", ifc_name, fwmark);
+    let _out = run_command("wg", &vec!["set", ifc_name, "fwmark", fwmark], None)?;
+    Ok(())
+}
+
+pub struct WgSetPeerParameters {
+    pub public_key: String,
+    pub remove: bool,
+    pub preshared_key: String,
+    pub endpoint: String,
+    pub persistent_keepalive: u32,
+    pub allowed_ips: String
+}
+
+pub struct WgSetParameters {
+    pub listen_port: u16,
+    pub private_key: String,
+    pub fwmark: String,
+    pub peer: WgSetPeerParameters,
+}
+
+///
+/// 
+/// 
+pub fn wg_set(ifc_name: &str, params: &WgSetParameters) -> Result<(), MultiError> {
+    Ok(())
+}

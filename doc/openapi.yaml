@@ -1,0 +1,87 @@
+openapi: 3.0.0
+info:
+  version: "1"
+  title: wgc2
+servers:
+  - url: 'http://10.255.0.7:8999'
+paths:
+  /wg/show:
+    get:
+      summary: 'Gets details about wireguard interfaces'
+      responses:
+          '200':
+              description: 'details about existing wireguard interface'
+              content:
+                  application/json:
+                      schema:
+                          $ref: '#/components/schema/Interface'
+  /wg/show/interfaces:
+    get:
+      summary: 'get a list of wireguard interfaces'
+      responses:
+        '200':
+          description: 'a list of interfaces'
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  type: string
+  /wg/show/{interface}:
+    get:
+      summary: 'get details about a wireguard interface'
+      parameters:
+        - in: path
+          name: interface
+          schema:
+            type: string
+          required: true
+          description: "the name of the wireguard interface"
+      responses:
+        '200':
+          description: 'interface details'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schema/Interface'
+components:
+  schemas:
+    Interface:
+      type: object
+      required:
+        - name
+        - public_key
+        - private_key
+        - listen_port
+        - address
+        - peers
+      properties:
+        name:
+          type: string
+        public_key:
+          type: string
+        listen_port:
+          type: integer
+          format: integer
+        address:
+          type: string
+        peers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Peer' 
+    Peer:
+      type: object
+      required:
+        - public_key
+        - allowed_ips
+        - persistent_keepalive
+        - endpoint
+      properties:
+        public_key:
+          type: string
+        allowed_ips:
+          type: string
+        persistent_keepalive:
+          type: integer
+        endpoint:
+          type: string

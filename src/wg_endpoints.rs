@@ -361,3 +361,8 @@ pub async fn handle_delete_wg_interface(path: web::Path<String>) -> impl Respond
         }
     }
 }
+
+///
+/// 
+/// 
+pub async fn handle_wg_set(req)
