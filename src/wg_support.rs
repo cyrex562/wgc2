@@ -461,13 +461,14 @@ pub fn wg_create_pvt_key_file(
         let file_name = format!("/etc/wireguard/{}.private.key", dev_name.unwrap());
         path = file_name.clone();
         file = File::open(file_name)?;
+        file.write_all(pvt_key.as_bytes())?;
     } else {
-        let tmp_file = NamedTempFile::new()?;
+        let mut tmp_file = NamedTempFile::new()?;
+        tmp_file.write_all(pvt_key.as_bytes())?;
         path = String::from(tmp_file.path().to_str().unwrap());
-        file = tmp_file.into_file();
     }
     log::debug!("key file path={}", &path);
-    file.write_all(pvt_key.as_bytes())?;
+    // file.write_all(pvt_key.as_bytes())?;
     out = path;
     Ok(out)
 }
