@@ -3,7 +3,7 @@ use std::{fs::File, path::Path};
 #[derive(Debug)]
 pub struct FileInfo {
     file_handle: File,
-    path: Path
+    path: Path,
 }
 
 // impl Clone for FileInfo {

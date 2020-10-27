@@ -12,12 +12,14 @@ pub fn ip_link_add(dev_name: &String, ifc_type: &String) -> Result<(), MultiErro
 }
 
 pub fn ip_addr_add(dev_name: &String, address: &String) -> Result<(), MultiError> {
+    log::debug!("adding address={} to device={}", address, dev_name);
     let _out = run_command("ip", &vec!["addr", "add", address, "dev", dev_name], None)?;
     // todo: verify that the address was added by getting a list of addresses for the interface and verifying it is contained.
     Ok(())
 }
 
 pub fn ip_link_set_up(dev_name: &String) -> Result<(), MultiError> {
+    log::debug!("setting dev={} link state to \"up\"", dev_name);
     let _out = run_command("ip", &vec!["link", "set", dev_name, "up"], None)?;
     // todo: verify that the link is now up
     Ok(())

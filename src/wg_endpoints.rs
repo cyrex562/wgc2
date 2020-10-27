@@ -4,7 +4,18 @@ use actix_files::NamedFile;
 use actix_web::{error, web, HttpResponse, Responder};
 use tempfile::NamedTempFile;
 
-use crate::{utils::{ret_internal_server_error, run_command}, wg_support::{WgCreateInterfaceRequest, WgKey, WgShowAll, WgShowInterfaces, create_wg_interface, create_wg_private_key, get_wg_public_key, parse_wg_keylike, parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark, parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port, parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive, parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key, parse_wg_show_transfer, wg_showconf}};
+use crate::{
+    utils::{ret_internal_server_error, run_command},
+    wg_support::{
+        create_wg_interface, create_wg_private_key, gen_wg_public_key, parse_wg_keylike,
+        parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
+        parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port,
+        parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive,
+        parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key,
+        parse_wg_show_transfer, wg_showconf, WgCreateInterfaceRequest, WgKey, WgShowAll,
+        WgShowInterfaces,
+    },
+};
 
 pub async fn wg_show() -> impl Responder {
     let out = match run_command("wg", &vec!["show"], None) {
@@ -306,7 +317,7 @@ pub async fn wg_genpsk() -> impl Responder {
 ///
 pub async fn wg_pubkey(req: web::Json<WgKey>) -> impl Responder {
     let in_key = req.key.clone();
-    let result = match get_wg_public_key(&in_key) {
+    let result = match gen_wg_public_key(&in_key) {
         Ok(x) => x,
         Err(e) => {
             let err_msg = format!("failed to get public key: {}", e.to_string());
@@ -317,20 +328,23 @@ pub async fn wg_pubkey(req: web::Json<WgKey>) -> impl Responder {
 }
 
 ///
-/// 
 ///
-pub async fn handle_create_wg_interface(req: web::Json<WgCreateInterfaceRequest>) -> impl Responder {
+///
+pub async fn handle_create_wg_interface(
+    req: web::Json<WgCreateInterfaceRequest>,
+) -> impl Responder {
     let ifc_name = req.ifc_name.clone();
     let address = req.address.clone();
     let listen_port = req.listen_port.clone();
     let set_link_up = req.set_link_up;
     let persist = req.persist;
-    let out = match create_wg_interface(&ifc_name, &address, Some(listen_port), set_link_up, persist) {
-        Ok(x) => x,
-        Err(e) => {
-            let err_msg = format!("failed to create interface: {}", e.to_string());
-            return Err(ret_internal_server_error(err_msg));
-        }
-    };
+    let out =
+        match create_wg_interface(&ifc_name, &address, Some(listen_port), set_link_up, persist) {
+            Ok(x) => x,
+            Err(e) => {
+                let err_msg = format!("failed to create interface: {}", e.to_string());
+                return Err(ret_internal_server_error(err_msg));
+            }
+        };
     Ok(HttpResponse::Ok().json(out))
 }

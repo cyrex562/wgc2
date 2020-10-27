@@ -84,7 +84,12 @@ pub fn run_command(
     );
 
     if !stderr_string.is_empty() {
-        log::error!("failed to execute command: {}", stderr_string);
+        log::error!(
+            "failed to execute command={}, args={:?}, stderr=\"{}\"",
+            command,
+            args,
+            stderr_string
+        );
         return Err(MultiError {
             kind: "CommandError".to_string(),
             message: "failed to execute to command".to_string(),

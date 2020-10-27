@@ -1,9 +1,9 @@
+pub mod common;
 pub mod iproute2_support;
 pub mod multi_error;
 pub mod utils;
 pub mod wg_endpoints;
 pub mod wg_support;
-pub mod common;
 
 use crate::multi_error::MultiError;
 use crate::utils::setup_logger;
@@ -13,7 +13,10 @@ use actix_web::{
     App, HttpResponse, HttpServer, Responder,
 };
 use clap::{Arg, ArgMatches};
-use wg_endpoints::{handle_create_wg_interface, wg_genkey, wg_genpsk, wg_pubkey, wg_show, wg_show_ifc_element, wg_show_interface, wg_show_interfaces, wg_showconf_ifc};
+use wg_endpoints::{
+    handle_create_wg_interface, wg_genkey, wg_genpsk, wg_pubkey, wg_show, wg_show_ifc_element,
+    wg_show_interface, wg_show_interfaces, wg_showconf_ifc,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct AppContext {

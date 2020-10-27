@@ -1,6 +1,12 @@
 use std::{fs::File, io::Write, path::Path};
 
-use crate::{iproute2_support::ip_addr_add, iproute2_support::ip_link_add, iproute2_support::ip_link_set_up, multi_error::MultiError, utils::{ret_multi_err, run_command}};
+use crate::{
+    iproute2_support::ip_addr_add,
+    iproute2_support::ip_link_add,
+    iproute2_support::ip_link_set_up,
+    multi_error::MultiError,
+    utils::{ret_multi_err, run_command},
+};
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 
@@ -353,6 +359,7 @@ pub fn parse_wg_keylike(output: &str) -> Result<WgKey, MultiError> {
 }
 
 pub fn create_wg_private_key() -> Result<WgKey, MultiError> {
+    log::debug!("creating wg private key");
     let out = match run_command("wg", &vec!["genkey"], None) {
         Ok(x) => x,
         Err(e) => {
@@ -372,7 +379,8 @@ pub fn create_wg_private_key() -> Result<WgKey, MultiError> {
     Ok(result)
 }
 
-pub fn get_wg_public_key(private_key: &String) -> Result<WgKey, MultiError> {
+pub fn gen_wg_public_key(private_key: &String) -> Result<WgKey, MultiError> {
+    log::debug!("generating wg public key");
     let out = match run_command("wg", &vec!["pubkey"], Some(private_key.clone())) {
         Ok(x) => x,
         Err(e) => {
@@ -393,12 +401,13 @@ pub fn get_wg_public_key(private_key: &String) -> Result<WgKey, MultiError> {
 }
 
 pub fn ip_link_add_wg(dev_name: &String) -> Result<(), MultiError> {
+    log::debug!("adding interface for device={}", dev_name);
     ip_link_add(dev_name, &WG_LNK_TYPE.to_string())?;
     Ok(())
 }
 
 pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(), MultiError> {
-
+    log::debug!("setting private key for interface={}", ifc_name);
     let key_file_path = wg_create_pvt_key_file(None, Some(private_key.clone()))?;
 
     let _out = run_command(
@@ -410,6 +419,7 @@ pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(),
 }
 
 pub fn wg_set_listen_port(ifc_name: &String, listen_port: &String) -> Result<(), MultiError> {
+    log::debug!("setting listen port={} for device={}", listen_port, ifc_name);
     let _out = run_command(
         "wg",
         &vec!["set", ifc_name, "listen-port", listen_port],
@@ -419,6 +429,7 @@ pub fn wg_set_listen_port(ifc_name: &String, listen_port: &String) -> Result<(),
 }
 
 pub fn wg_showconf(ifc_name: &String) -> Result<String, MultiError> {
+    
     let out = match run_command("wg", &vec!["showconf", ifc_name], None) {
         Ok(x) => x,
         Err(e) => {
@@ -430,7 +441,10 @@ pub fn wg_showconf(ifc_name: &String) -> Result<String, MultiError> {
     Ok(out)
 }
 
-pub fn wg_create_pvt_key_file(dev_name: Option<String>, key: Option<String>) -> Result<String, MultiError> {
+pub fn wg_create_pvt_key_file(
+    dev_name: Option<String>,
+    key: Option<String>,
+) -> Result<String, MultiError> {
     let pvt_key: String;
 
     if key.is_some() {
@@ -466,8 +480,8 @@ pub struct WgCreateInterfaceRequest {
 }
 
 ///
-/// 
-/// 
+///
+///
 pub fn create_wg_interface(
     ifc_name: &String,
     address: &String,
@@ -475,6 +489,7 @@ pub fn create_wg_interface(
     set_link_up: bool,
     persist: bool,
 ) -> Result<WgInterface, MultiError> {
+    log::debug!("creating wireguard interface: name={}, address={}, set_link_up={:?}, persist={:?}", ifc_name, address, set_link_up, persist);
     // todo: check if interface already exists
     // todo: check if address already exists
     // todo: check if something is already listening on that port
@@ -485,7 +500,7 @@ pub fn create_wg_interface(
     // create a private key
     out.private_key = create_wg_private_key()?.key;
     // create a public key
-    out.public_key = get_wg_public_key(&out.private_key)?.key;
+    out.public_key = gen_wg_public_key(&out.private_key)?.key;
     // set listen port
     if listen_port.is_some() {
         out.listen_port = listen_port.unwrap();
