@@ -1,13 +1,8 @@
-use std::{path::Path, io::Write};
+use std::{fs::File, io::Write, path::Path};
 
-use crate::{
-    iproute2_support::ip_addr_add,
-    iproute2_support::ip_link_add,
-    iproute2_support::ip_link_set_up,
-    multi_error::MultiError,
-    utils::{ret_multi_err, run_command},
-};
+use crate::{iproute2_support::ip_addr_add, iproute2_support::ip_link_add, iproute2_support::ip_link_set_up, multi_error::MultiError, utils::{ret_multi_err, run_command}};
 use serde::{Deserialize, Serialize};
+use tempfile::NamedTempFile;
 
 const WG_DFLT_LISTEN_PORT: u16 = 51820;
 const WG_LNK_TYPE: &str = "wireguard";
@@ -403,10 +398,13 @@ pub fn ip_link_add_wg(dev_name: &String) -> Result<(), MultiError> {
 }
 
 pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(), MultiError> {
+
+    let key_file_path = wg_create_pvt_key_file(None, Some(private_key.clone()))?;
+
     let _out = run_command(
         "wg",
-        &vec!["set", ifc_name, "private-key"],
-        Some(private_key.clone()),
+        &vec!["set", ifc_name, "private-key", key_file_path.as_str()],
+        None,
     )?;
     Ok(())
 }
@@ -429,6 +427,32 @@ pub fn wg_showconf(ifc_name: &String) -> Result<String, MultiError> {
         }
     };
 
+    Ok(out)
+}
+
+pub fn wg_create_pvt_key_file(dev_name: Option<String>, key: Option<String>) -> Result<String, MultiError> {
+    let pvt_key: String;
+
+    if key.is_some() {
+        pvt_key = key.unwrap().clone();
+    } else {
+        pvt_key = create_wg_private_key()?.key;
+    }
+
+    let out: String;
+    let path: String;
+    let mut file: File;
+    if dev_name.is_some() {
+        let file_name = format!("/etc/wireguard/{}.private.key", dev_name.unwrap());
+        path = file_name.clone();
+        file = File::open(file_name)?;
+    } else {
+        let tmp_file = NamedTempFile::new()?;
+        path = String::from(tmp_file.path().to_str().unwrap());
+        file = tmp_file.into_file();
+    }
+    file.write_all(pvt_key.as_bytes())?;
+    out = path;
     Ok(out)
 }
 

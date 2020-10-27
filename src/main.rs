@@ -3,6 +3,7 @@ pub mod multi_error;
 pub mod utils;
 pub mod wg_endpoints;
 pub mod wg_support;
+pub mod common;
 
 use crate::multi_error::MultiError;
 use crate::utils::setup_logger;
