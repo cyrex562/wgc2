@@ -445,6 +445,7 @@ pub fn wg_create_pvt_key_file(
     dev_name: Option<String>,
     key: Option<String>,
 ) -> Result<String, MultiError> {
+    log::debug!("creating private key file");
     let pvt_key: String;
 
     if key.is_some() {
@@ -465,6 +466,7 @@ pub fn wg_create_pvt_key_file(
         path = String::from(tmp_file.path().to_str().unwrap());
         file = tmp_file.into_file();
     }
+    log::debug!("key file path={}", &path);
     file.write_all(pvt_key.as_bytes())?;
     out = path;
     Ok(out)
