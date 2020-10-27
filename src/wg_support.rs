@@ -408,7 +408,7 @@ pub fn ip_link_add_wg(dev_name: &String) -> Result<(), MultiError> {
 
 pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(), MultiError> {
     log::debug!("setting private key for interface={}", ifc_name);
-    let key_file_path = wg_create_pvt_key_file(None, Some(private_key.clone()))?;
+    let key_file_path = wg_create_pvt_key_file(Some(ifc_name.clone()), Some(private_key.clone()))?;
 
     let _out = run_command(
         "wg",
