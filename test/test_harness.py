@@ -42,6 +42,12 @@ def gen_private_key() -> str:
     private = r.json()["key"]
     return private
 
+def get_private_key(ifc_name: str) -> str:
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/private-key")
+    res = r.json()
+    return res["private_key"]
+
+
 
 def test_wg_show():
     """
@@ -205,8 +211,18 @@ def test_wg_pubkey():
     pub_key = result["key"]
     assert len(pub_key) > 0
 
-def test_wg_set_private_key():
-    assert False
+def test_wg_set_private_key(make_interface):
+    ifc_name = make_interface["name"]
+    pre_private_key = make_interface["private_key"]
+    new_private_key = gen_private_key()
+    r = requests.post(f"{URL}/wg/set/{ifc_name}",
+    json={
+        "private_key": new_private_key
+    })
+    assert r.ok
+    post_private_key = get_private_key(ifc_name)
+    assert new_private_key == post_private_key
+    assert pre_private_key != post_private_key
 
 def test_wg_set_listen_port():
     assert False
