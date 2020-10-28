@@ -52,7 +52,10 @@ def get_listen_port(ifc_name: str) -> int:
     res = r.json()
     return res["listen_port"]
 
-
+def get_fwmark(ifc_name: str) -> str:
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/fwmark")
+    res = r.json()
+    return res["fwmark"]
 
 
 def test_wg_show():
@@ -243,7 +246,23 @@ def test_wg_set_listen_port(make_interface):
     assert new_listen_port == post_listen_port
     assert pre_listen_port != post_listen_port
 
-def test_wg_set_fwmark():
+def test_wg_set_fwmark(make_interface):
+    ifc_name = make_interface["name"]
+    pre_fwmark = "off"
+    new_fwmark ="0x12345678"
+    r = requests.put(f"{URL}/wg/set/{ifc_name}",
+    json={
+        "fwmark": new_fwmark
+    })
+    assert r.ok
+    post_fwmark = get_fwmark(ifc_name)
+    assert new_fwmark == post_fwmark
+    assert pre_fwmark != post_fwmark
+
+def test_wg_add_peer():
+    assert False
+
+def test_wg_remove_peer():
     assert False
 
 def test_wg_set_peer_remove():
@@ -261,11 +280,7 @@ def test_wg_set_peer_persistent_keepalive():
 def test_wg_set_peer_psk():
     assert False
 
-def test_wg_add_peer():
-    assert False
 
-def test_wg_remove_peer():
-    assert False
 
 def test_wg_setconf_peer():
     assert False
