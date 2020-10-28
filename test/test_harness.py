@@ -114,8 +114,12 @@ def test_wg_show_private_key(make_interface):
     result = r.json()
     assert result["private_key"] == exp_private_key
 
-def test_wg_show_listen_port():
-    assert False
+def test_wg_show_listen_port(make_interface):
+    ifc_name = make_interface["name"]
+    exp_listen_port = make_interface["listen_port"]
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/listen-port")
+    result = r.json()
+    assert result["listen_port"] == exp_listen_port
 
 def test_wg_show_fwmark():
     assert False
