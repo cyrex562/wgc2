@@ -51,9 +51,8 @@ def test_wg_show():
     """
     r = requests.get(f"{URL}/wg/show")
     # should return 200
-    assert r.ok()
+    assert r.ok
     # should contain JSON
-    assert r.json()
     result = r.json()
     # JSON result should contain an "interfaces" field
     interfaces = result.get("interfaces", None)
