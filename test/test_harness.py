@@ -60,7 +60,20 @@ def test_wg_show():
     
 
 def test_wg_show_interfaces():
-    assert False
+    """
+    {
+    "interfaces": [
+        "wg2",
+        "wg0",
+        "wg1"
+    ]
+    }
+    """
+    r = requests.get(f"{URL}/wg/show/interfaces")
+    assert r.ok
+    result = r.json()
+    interfaces = result.get("interfaces", None)
+    assert interfaces is not None
 
 def test_wg_show_interface():
     assert False
