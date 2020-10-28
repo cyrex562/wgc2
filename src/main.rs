@@ -14,8 +14,8 @@ use actix_web::{
 };
 use clap::{Arg, ArgMatches};
 use wg_endpoints::{
-    handle_create_wg_interface, handle_delete_wg_interface, wg_genkey, wg_genpsk, wg_pubkey,
-    wg_show, wg_show_ifc_element, wg_show_interface, wg_show_interfaces, wg_showconf_ifc,
+    handle_create_wg_interface, handle_delete_wg_interface, handle_wg_show_interface, wg_genkey,
+    wg_genpsk, wg_pubkey, handle_wg_show, wg_show_ifc_element, handle_wg_show_interfaces, wg_showconf_ifc,
 };
 
 #[derive(Debug, Clone, Default)]
@@ -86,9 +86,9 @@ async fn main() -> std::result::Result<(), MultiError> {
     HttpServer::new(|| {
         App::new().wrap(middleware::Logger::default()).service(
             web::scope("/api/v1/wg")
-                .route("/show", web::get().to(wg_show))
-                .route("/show/interfaces", web::get().to(wg_show_interfaces))
-                .route("/show/{interface}", web::get().to(wg_show_interface))
+                .route("/show", web::get().to(handle_wg_show))
+                .route("/show/interfaces", web::get().to(handle_wg_show_interfaces))
+                .route("/show/{interface}", web::get().to(handle_wg_show_interface))
                 .route(
                     "/show/{interface}/{element}",
                     web::get().to(wg_show_ifc_element),

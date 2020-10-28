@@ -50,6 +50,31 @@ pub struct WgShowInterfaces {
     pub interfaces: Vec<String>,
 }
 
+pub fn wg_show_interface(ifc_name: &str) -> Result<WgInterface, MultiError> {
+    log::debug!("getting interface info for dev={}", ifc_name);
+    let out = match run_command("wg", &vec!["show", ifc_name], None) {
+        Ok(x) => x,
+        Err(e) => {
+            let msg = format!(
+                "failed to run wg show for dev={}, e={}",
+                ifc_name,
+                e.to_string()
+            );
+            return Err(ret_multi_err(msg));
+        }
+    };
+
+    let interfaces = match parse_wg_show_output(out.as_str()) {
+        Ok(x) => x,
+        Err(e) => {
+            let msg = format!("failed to parse wg show output, e={}", e.to_string());
+            return Err(ret_multi_err(msg));
+        }
+    };
+    let result = interfaces[0].clone();
+    Ok(result)
+}
+
 pub fn parse_wg_show_interfaces(output: &str) -> Result<Vec<String>, MultiError> {
     let mut out: Vec<String> = Vec::new();
     for item in output.split_whitespace() {
@@ -388,9 +413,9 @@ pub fn create_wg_private_key() -> Result<WgKey, MultiError> {
     Ok(result)
 }
 
-pub fn gen_wg_public_key(private_key: &String) -> Result<WgKey, MultiError> {
+pub fn gen_wg_public_key(private_key: &str) -> Result<WgKey, MultiError> {
     log::debug!("generating wg public key");
-    let out = match run_command("wg", &vec!["pubkey"], Some(private_key.clone())) {
+    let out = match run_command("wg", &vec!["pubkey"], Some(private_key.to_string())) {
         Ok(x) => x,
         Err(e) => {
             let err_msg = format!("failed to run wg pubkey: {}", e.to_string());
@@ -409,15 +434,16 @@ pub fn gen_wg_public_key(private_key: &String) -> Result<WgKey, MultiError> {
     Ok(result)
 }
 
-pub fn ip_link_add_wg(dev_name: &String) -> Result<(), MultiError> {
+pub fn ip_link_add_wg(dev_name: &str) -> Result<(), MultiError> {
     log::debug!("adding interface for device={}", dev_name);
     ip_link_add(dev_name, &WG_LNK_TYPE.to_string())?;
     Ok(())
 }
 
-pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(), MultiError> {
+pub fn wg_set_private_key(ifc_name: &str, private_key: &str) -> Result<(), MultiError> {
     log::debug!("setting private key for interface={}", ifc_name);
-    let key_file_path = wg_create_pvt_key_file(Some(ifc_name.clone()), Some(private_key.clone()))?;
+    let key_file_path =
+        wg_create_pvt_key_file(Some(ifc_name.to_string()), Some(private_key.to_string()))?;
 
     let _out = run_command(
         "wg",
@@ -427,7 +453,7 @@ pub fn wg_set_private_key(ifc_name: &String, private_key: &String) -> Result<(),
     Ok(())
 }
 
-pub fn wg_set_listen_port(ifc_name: &String, listen_port: &String) -> Result<(), MultiError> {
+pub fn wg_set_listen_port(ifc_name: &str, listen_port: &str) -> Result<(), MultiError> {
     log::debug!(
         "setting listen port={} for device={}",
         listen_port,
@@ -441,7 +467,7 @@ pub fn wg_set_listen_port(ifc_name: &String, listen_port: &String) -> Result<(),
     Ok(())
 }
 
-pub fn wg_showconf(ifc_name: &String) -> Result<String, MultiError> {
+pub fn wg_showconf(ifc_name: &str) -> Result<String, MultiError> {
     let out = match run_command("wg", &vec!["showconf", ifc_name], None) {
         Ok(x) => x,
         Err(e) => {
@@ -652,33 +678,189 @@ pub fn delete_wg_interface(ifc_name: &str) -> Result<(), MultiError> {
 }
 
 ///
-/// 
-/// 
+///
+///
 pub fn wg_set_fwmark(ifc_name: &str, fwmark: &str) -> Result<(), MultiError> {
-    log::debug!("setting fwmark for interface={} to fwmark={}", ifc_name, fwmark);
+    log::debug!(
+        "setting fwmark for interface={} to fwmark={}",
+        ifc_name,
+        fwmark
+    );
     let _out = run_command("wg", &vec!["set", ifc_name, "fwmark", fwmark], None)?;
     Ok(())
 }
 
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct WgSetPeerParameters {
     pub public_key: String,
-    pub remove: bool,
-    pub preshared_key: String,
-    pub endpoint: String,
-    pub persistent_keepalive: u32,
-    pub allowed_ips: String
+    pub remove: Option<bool>,
+    pub preshared_key: Option<String>,
+    pub endpoint: Option<String>,
+    pub persistent_keepalive: Option<u32>,
+    pub allowed_ips: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct WgSetParameters {
-    pub listen_port: u16,
-    pub private_key: String,
-    pub fwmark: String,
-    pub peer: WgSetPeerParameters,
+    pub listen_port: Option<u16>,
+    pub private_key: Option<String>,
+    pub fwmark: Option<String>,
+    pub peer: Option<WgSetPeerParameters>,
+}
+
+pub fn wg_set_peer_remove(ifc_name: &str, peer: &str) -> Result<(), MultiError> {
+    match run_command("wg", &vec!["set", ifc_name, "peer", peer, "remove"], None) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            let msg = format!(
+                "failed to remove peer={} from ifc={}, e={}",
+                peer,
+                ifc_name,
+                e.to_string()
+            );
+            Err(ret_multi_err(msg))
+        }
+    }
+}
+
+pub fn wg_set_peer_allowed_ips(
+    ifc_name: &str,
+    peer: &str,
+    allowed_ips: &str,
+) -> Result<(), MultiError> {
+    match run_command(
+        "wg",
+        &vec!["set", ifc_name, "peer", peer, "allowed-ips", allowed_ips],
+        None,
+    ) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            let msg = format!(
+                "failed to set dev={} peer={} allowed-ips={}, error={}",
+                ifc_name,
+                peer,
+                allowed_ips,
+                e.to_string()
+            );
+            Err(ret_multi_err(msg))
+        }
+    }
+}
+
+pub fn wg_set_peer_endpoint(ifc_name: &str, peer: &str, endpoint: &str) -> Result<(), MultiError> {
+    match run_command(
+        "wg",
+        &vec!["set", ifc_name, "peer", peer, "endpoint", endpoint],
+        None,
+    ) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            let msg = format!(
+                "failed to set dev={} peer={} endpoint={}, error={}",
+                ifc_name,
+                peer,
+                endpoint,
+                e.to_string()
+            );
+            Err(ret_multi_err(msg))
+        }
+    }
+}
+
+pub fn wg_set_peer_keepalive(ifc_name: &str, peer: &str, keepalive: u32) -> Result<(), MultiError> {
+    match run_command(
+        "wg",
+        &vec![
+            "set",
+            ifc_name,
+            "peer",
+            peer,
+            "persistent-keepalive",
+            format!("{}", keepalive).as_str(),
+        ],
+        None,
+    ) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            let msg = format!(
+                "failed to set dev={} peer={} keepalive={}, error={}",
+                ifc_name,
+                peer,
+                keepalive,
+                e.to_string()
+            );
+            Err(ret_multi_err(msg))
+        }
+    }
+}
+
+pub fn wg_set_peer_psk(ifc_name: &str, peer: &str, psk: &str) -> Result<(), MultiError> {
+    match run_command(
+        "wg",
+        &vec!["set", ifc_name, "peer", peer, "preshared-key", psk],
+        None,
+    ) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            let msg = format!(
+                "failed to set dev={} peer={} psk={}, error={}",
+                ifc_name,
+                peer,
+                psk,
+                e.to_string()
+            );
+            Err(ret_multi_err(msg))
+        }
+    }
+}
+
+pub fn wg_set_peer(ifc_name: &str, params: &WgSetPeerParameters) -> Result<(), MultiError> {
+    let peer = params.public_key.as_str();
+    if params.remove.is_some() {
+        if params.remove.unwrap() {
+            wg_set_peer_remove(ifc_name, peer)?
+        }
+    } else {
+        if params.allowed_ips.is_some() {
+            wg_set_peer_allowed_ips(ifc_name, peer, params.allowed_ips.clone().unwrap().as_str())?;
+        }
+        if params.endpoint.is_some() {
+            wg_set_peer_endpoint(ifc_name, peer, params.endpoint.clone().unwrap().as_str())?;
+        }
+        if params.persistent_keepalive.is_some() {
+            wg_set_peer_keepalive(ifc_name, peer, params.persistent_keepalive.unwrap())?;
+        }
+        if params.preshared_key.is_some() {
+            wg_set_peer_psk(
+                ifc_name,
+                peer,
+                params.preshared_key.clone().unwrap().as_str(),
+            )?;
+        }
+    }
+
+    Ok(())
 }
 
 ///
-/// 
-/// 
+///
+///
 pub fn wg_set(ifc_name: &str, params: &WgSetParameters) -> Result<(), MultiError> {
+    if params.listen_port.is_some() {
+        wg_set_listen_port(
+            ifc_name,
+            format!("{}", params.listen_port.unwrap()).as_str(),
+        )?;
+    }
+    if params.private_key.is_some() {
+        let pvt_key: String = params.private_key.clone().unwrap();
+        wg_set_private_key(ifc_name, pvt_key.as_str())?;
+    }
+    if params.fwmark.is_some() {
+        let fwmark: String = params.fwmark.clone().unwrap();
+        wg_set_fwmark(ifc_name, fwmark.as_str())?;
+    }
+    if params.peer.is_some() {}
+
     Ok(())
 }
