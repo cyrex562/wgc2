@@ -175,7 +175,12 @@ def test_wg_showconf(make_interface):
     r = requests.get(f"{URL}/wg/showconf/{ifc_name}")
     file_content = r.text
     print(f"downloaded conf:\n{file_content}\n")
-    assert "test123" in file_content
+    # [Interface]
+    # ListenPort = 51111
+    # PrivateKey = 6M0wLVKY7+/s7NC/2szmL/ARi/vk6uZrLr5Xt70VbmQ=
+    assert "[Interface]" in file_content
+    assert "ListenPort = " in file_content
+    assert "PrivateKey = " in file_content
 
 def test_wg_genkey():
     assert False
