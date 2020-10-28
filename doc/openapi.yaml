@@ -5,6 +5,26 @@ info:
 servers:
   - url: 'http://10.255.0.7:8999'
 paths:
+  /wg/interface/{interface}/peer:
+    post:
+      description: 'Add a peer to an interface'
+      parameters:
+        - in: path
+          name: interface
+          schema:
+            type: string
+          required: true
+          description: 'name of the interface'
+      requestBody:
+        description: 'JSON object describing the peer to add'
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WgPeerParams'
+      responses:
+        '200':
+          description: OK
   /wg/show:
     get:
       summary: 'Gets details about wireguard interfaces'
@@ -85,3 +105,17 @@ components:
           type: integer
         endpoint:
           type: string
+    WgPeerParams:
+      type: object
+      required:
+        - public key
+      properties:
+        public_key:
+          type: string
+        allowed_ips:
+          type: string
+        persistent_keepalive:
+          type: integer
+        endpoint:
+          type: string
+          
