@@ -93,7 +93,7 @@ def test_create_delete_wg_interface():
 
 def test_wg_show_interface(make_interface):
     ifc_name = make_interface["name"]
-    r = requests.get(f"{URL}/wg/show/interface/{ifc_name}")
+    r = requests.get(f"{URL}/wg/show/{ifc_name}")
     assert r.ok
     result = r.json()
     interfaces = result.get("interfaces", None)
