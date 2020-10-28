@@ -2,6 +2,7 @@ from test.test_settings import URL
 import requests
 from typing import Tuple
 from requests import Response
+import pytest
 
 def create_interface(
     ifc_name: str = "test0", 
@@ -19,7 +20,7 @@ def create_interface(
         "persist": persist})
     print(f"create ifc result={r}")
 
-    return ifc_name, r.json()
+    return r.json()
 
 def delete_interface(ifc_name: str) -> bool:
     r = requests.delete(
@@ -27,6 +28,14 @@ def delete_interface(ifc_name: str) -> bool:
     )
     print(f"delete ifc result={r}")
     return r.ok
+
+
+@pytest.fixture()
+def make_interface():
+    r_json = create_interface(ifc_name="test123")
+    yield r_json
+    delete_interface(ifc_name="test123")
+
 
 def test_wg_show():
     """
@@ -77,19 +86,19 @@ def test_wg_show_interfaces():
     assert interfaces is not None
 
 def test_create_delete_wg_interface():
-    ifc_name, result_json = create_interface(ifc_name="test123")
-    assert ifc_name == "test123"
+    result_json = create_interface(ifc_name="test123")
+    assert result_json["name"] == "test123"
     assert result_json.get("name", None) is not None
     assert delete_interface(ifc_name="test123") is True
 
-def test_wg_show_interface():
-    ifc_name, result_json = create_interface(ifc_name="test123")
-    r = requests.get(f"{URL}/wg/show/interfaces/{ifc_name}")
+def test_wg_show_interface(make_interface):
+    ifc_name = make_interface["name"]
+    r = requests.get(f"{URL}/wg/show/interface/{ifc_name}")
     assert r.ok
     result = r.json()
     interfaces = result.get("interfaces", None)
     assert interfaces is not None
-    assert delete_interface(ifc_name="test123") is True
+    assert interfaces[0]["name"] == "test123"
 
 def test_wg_show_public_key():
     assert False
