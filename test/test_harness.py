@@ -100,8 +100,12 @@ def test_wg_show_interface(make_interface):
     print(f"result_json={result}")
     assert result["name"] == "test123"
 
-def test_wg_show_public_key():
-    assert False
+def test_wg_show_public_key(make_interface):
+    ifc_name = make_interface["name"]
+    exp_public_key = make_interface["public_key"]
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/public-key")
+    result = r.json()
+    assert result["public_key"] == exp_public_key
 
 def test_wg_show_private_key():
     assert False
