@@ -47,6 +47,12 @@ def get_private_key(ifc_name: str) -> str:
     res = r.json()
     return res["private_key"]
 
+def get_listen_port(ifc_name: str) -> int:
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/listen-port")
+    res = r.json()
+    return res["listen_port"]
+
+
 
 
 def test_wg_show():
@@ -224,8 +230,18 @@ def test_wg_set_private_key(make_interface):
     assert new_private_key == post_private_key
     assert pre_private_key != post_private_key
 
-def test_wg_set_listen_port():
-    assert False
+def test_wg_set_listen_port(make_interface):
+    ifc_name = make_interface["name"]
+    pre_listen_port = make_interface["listen_port"]
+    new_listen_port = 52222
+    r = requests.put(f"{URL}/wg/set/{ifc_name}",
+    json={
+        "listen_port": new_listen_port
+    })
+    assert r.ok
+    post_listen_port = get_listen_port(ifc_name)
+    assert new_listen_port == post_listen_port
+    assert pre_listen_port != post_listen_port
 
 def test_wg_set_fwmark():
     assert False
