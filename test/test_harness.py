@@ -135,23 +135,47 @@ def test_wg_show_peers(make_interface):
     result = r.json()
     assert len(result["peers"]) == len(peers)
 
-def test_wg_show_endpoints():
-    assert False
+def test_wg_show_endpoints(make_interface):
+    ifc_name = make_interface["name"]
+    endpoints = []
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/endpoints")
+    result = r.json()
+    assert len(result["endpoints"]) == len(endpoints)
 
-def test_wg_show_allowed_ips():
-    assert False
+def test_wg_show_allowed_ips(make_interface):
+    ifc_name = make_interface["name"]
+    allowed_ips = []
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/allowed-ips")
+    result = r.json()
+    assert len(result["allowed_ips"]) == len(allowed_ips)
 
-def test_wg_show_latest_handshakes():
-    assert False
+def test_wg_show_latest_handshakes(make_interface):
+    ifc_name = make_interface["name"]
+    latest_handshakes = []
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/latest-handshakes")
+    result = r.json()
+    assert len(result["latest_handshakes"]) == len(latest_handshakes)
 
-def test_wg_show_persistent_keepalive():
-    assert False
+def test_wg_show_persistent_keepalive(make_interface):
+    ifc_name = make_interface["name"]
+    persistent_keepalives = []
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/persistent-keepalive")
+    result = r.json()
+    assert len(result["persistent_keepalives"]) == len(persistent_keepalives)
 
-def test_wg_show_transfer():
-    assert False
+def test_wg_show_transfer(make_interface):
+    ifc_name = make_interface["name"]
+    transfers = []
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/transfer")
+    result = r.json()
+    assert len(result["transfers"]) == len(transfers)
 
-def test_wg_showconf():
-    assert False
+def test_wg_showconf(make_interface):
+    ifc_name = make_interface["name"]
+    r = requests.get(f"{URL}/wg/showconf/{ifc_name}")
+    file_content = r.text
+    print(f"downloaded conf:\n{file_content}\n")
+    assert "test123" in file_content
 
 def test_wg_genkey():
     assert False
