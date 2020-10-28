@@ -128,8 +128,12 @@ def test_wg_show_fwmark(make_interface):
     result = r.json()
     assert result["fwmark"] == exp_fwmark
 
-def test_wg_show_peers():
-    assert False
+def test_wg_show_peers(make_interface):
+    ifc_name = make_interface["name"]
+    peers = []
+    r = requests.get(f"{URL}/wg/show/{ifc_name}/peers")
+    result = r.json()
+    assert len(result["peers"]) == len(peers)
 
 def test_wg_show_endpoints():
     assert False
