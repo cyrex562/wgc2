@@ -96,6 +96,7 @@ def test_wg_show_interface(make_interface):
     r = requests.get(f"{URL}/wg/show/{ifc_name}")
     assert r.ok
     result = r.json()
+    print(f"result_json={result}")
     interfaces = result.get("interfaces", None)
     assert interfaces is not None
     assert interfaces[0]["name"] == "test123"
