@@ -3,29 +3,30 @@ import requests
 from typing import Tuple
 from requests import Response
 
-# def create_interface(app_ctx: AppContext, 
-#     ifc_name: str = "test0", 
-#     address: str = "192.0.2.2/32", 
-#     listen_port: int = 51111, 
-#     set_link_up: bool = False, 
-#     persist: bool = False) -> Tuple[str, Response]:
-#     r = requests.post(
-#         f"{app_ctx.address}/wg/interface", 
-#         data={"ifc_name": ifc_name, 
-#         "address": address, 
-#         "listen_port": listen_port, 
-#         "set_link_up": set_link_up, 
-#         "persist": persist})
-#     print(f"create ifc result={r}")
+def create_interface(
+    ifc_name: str = "test0", 
+    address: str = "192.0.2.2/32", 
+    listen_port: int = 51111, 
+    set_link_up: bool = False, 
+    persist: bool = False
+    ) -> Tuple[str, Response]:
+    r = requests.post(
+        f"{URL}/wg/interface", 
+        data={"ifc_name": ifc_name, 
+        "address": address, 
+        "listen_port": listen_port, 
+        "set_link_up": set_link_up, 
+        "persist": persist})
+    print(f"create ifc result={r}")
 
-#     return ifc_name, r
+    return ifc_name, r.json()
 
-# def delete_interface(app_ctx: AppContext, ifc_name: str) -> bool:
-#     r = requests.delete(
-#         f"{app_ctx.address}/wg/interface/{ifc_name}"
-#     )
-#     print(f"delete ifc result={r}")
-#     return r.ok()
+def delete_interface(ifc_name: str) -> bool:
+    r = requests.delete(
+        f"{URL}/wg/interface/{ifc_name}"
+    )
+    print(f"delete ifc result={r}")
+    return r.ok()
 
 def test_wg_show():
     """
@@ -75,8 +76,20 @@ def test_wg_show_interfaces():
     interfaces = result.get("interfaces", None)
     assert interfaces is not None
 
+def test_create_delete_wg_interface():
+    ifc_name, result_json = create_interface(ifc_name="test123")
+    assert ifc_name == "test123"
+    assert result_json.get("name", None) is not None
+    assert delete_interface(ifc_name="test123") is True
+
 def test_wg_show_interface():
-    assert False
+    ifc_name, result_json = create_interface(ifc_name="test123")
+    r = requests.get(f"{URL}/wg/show/interfaces/{ifc_name}")
+    assert r.ok
+    result = r.json()
+    interfaces = result.get("interfaces", None)
+    assert interfaces is not None
+    assert delete_interface(ifc_name="test123") is True
 
 def test_wg_show_public_key():
     assert False
@@ -120,11 +133,7 @@ def test_wg_genpsk():
 def test_wg_pubkey():
     assert False
 
-def test_create_wg_interface():
-    assert False
 
-def test_delete_wg_interface():
-    assert False
 
 def test_wg_set_private_key():
     assert False
