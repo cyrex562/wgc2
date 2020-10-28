@@ -37,6 +37,12 @@ def make_interface():
     delete_interface(ifc_name="test123")
 
 
+def gen_private_key() -> str:
+    r = requests.get(f"{URL}/wg/genkey")
+    private = r.json()["key"]
+    return private
+
+
 def test_wg_show():
     """
     {
@@ -193,7 +199,11 @@ def test_wg_genpsk():
     assert len(psk) > 0
 
 def test_wg_pubkey():
-    assert False
+    private_key = gen_private_key()
+    r = requests.post(f"{URL}/wg/pubkey", json={"key": private_key})
+    result = r.json()
+    pub_key = result["key"]
+    assert len(pub_key) > 0
 
 def test_wg_set_private_key():
     assert False
