@@ -183,10 +183,14 @@ def test_wg_showconf(make_interface):
     assert "PrivateKey = " in file_content
 
 def test_wg_genkey():
-    assert False
+    r = requests.get(f"{URL}/wg/genkey")
+    private = r.json()["key"]
+    assert len(private) > 0
 
 def test_wg_genpsk():
-    assert False
+    r = requests.get(f"{URL}/wg/genpsk")
+    psk = r.json()["key"]
+    assert len(psk) > 0
 
 def test_wg_pubkey():
     assert False
