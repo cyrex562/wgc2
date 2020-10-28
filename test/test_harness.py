@@ -49,7 +49,7 @@ def test_wg_show():
     ]
     }
     """
-    r = requests.get(f"{URL}wg/show")
+    r = requests.get(f"{URL}/wg/show")
     # should return 200
     assert r.ok()
     # should contain JSON
