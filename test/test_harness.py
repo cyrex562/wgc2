@@ -26,7 +26,7 @@ def delete_interface(ifc_name: str) -> bool:
         f"{URL}/wg/interface/{ifc_name}"
     )
     print(f"delete ifc result={r}")
-    return r.ok()
+    return r.ok
 
 def test_wg_show():
     """
