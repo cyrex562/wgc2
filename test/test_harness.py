@@ -215,7 +215,7 @@ def test_wg_set_private_key(make_interface):
     ifc_name = make_interface["name"]
     pre_private_key = make_interface["private_key"]
     new_private_key = gen_private_key()
-    r = requests.post(f"{URL}/wg/set/{ifc_name}",
+    r = requests.put(f"{URL}/wg/set/{ifc_name}",
     json={
         "private_key": new_private_key
     })

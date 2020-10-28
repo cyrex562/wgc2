@@ -99,7 +99,7 @@ async fn main() -> std::result::Result<(), MultiError> {
                     "/interface/{interface}",
                     web::delete().to(handle_delete_wg_interface),
                 )
-                .route("/wg/set/{interface}", web::post().to(handle_wg_set)),
+                .route("/wg/set/{interface}", web::put().to(handle_wg_set)),
         )
         // .service(
         //     web::scope("/api/v1/")
