@@ -12,7 +12,7 @@ def create_interface(
     ) -> Tuple[str, Response]:
     r = requests.post(
         f"{URL}/wg/interface", 
-        data={"ifc_name": ifc_name, 
+        json={"ifc_name": ifc_name, 
         "address": address, 
         "listen_port": listen_port, 
         "set_link_up": set_link_up, 
