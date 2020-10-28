@@ -1,38 +1,64 @@
+from test.test_settings import URL
 import requests
 from typing import Tuple
 from requests import Response
-import pytest
 
-class AppContext:
-    def __init__(self, address):
-        self.address = f"http://{address}/api/v1"
+# def create_interface(app_ctx: AppContext, 
+#     ifc_name: str = "test0", 
+#     address: str = "192.0.2.2/32", 
+#     listen_port: int = 51111, 
+#     set_link_up: bool = False, 
+#     persist: bool = False) -> Tuple[str, Response]:
+#     r = requests.post(
+#         f"{app_ctx.address}/wg/interface", 
+#         data={"ifc_name": ifc_name, 
+#         "address": address, 
+#         "listen_port": listen_port, 
+#         "set_link_up": set_link_up, 
+#         "persist": persist})
+#     print(f"create ifc result={r}")
 
-def create_interface(app_ctx: AppContext, 
-    ifc_name: str = "test0", 
-    address: str = "192.0.2.2/32", 
-    listen_port: int = 51111, 
-    set_link_up: bool = False, 
-    persist: bool = False) -> Tuple[str, Response]:
-    r = requests.post(
-        f"{app_ctx.address}/wg/interface", 
-        data={"ifc_name": ifc_name, 
-        "address": address, 
-        "listen_port": listen_port, 
-        "set_link_up": set_link_up, 
-        "persist": persist})
-    print(f"create ifc result={r}")
+#     return ifc_name, r
 
-    return ifc_name, r
-
-def delete_interface(app_ctx: AppContext, ifc_name: str) -> bool:
-    r = requests.delete(
-        f"{app_ctx.address}/wg/interface/{ifc_name}"
-    )
-    print(f"delete ifc result={r}")
-    return r.ok()
+# def delete_interface(app_ctx: AppContext, ifc_name: str) -> bool:
+#     r = requests.delete(
+#         f"{app_ctx.address}/wg/interface/{ifc_name}"
+#     )
+#     print(f"delete ifc result={r}")
+#     return r.ok()
 
 def test_wg_show():
-    assert False
+    """
+    {
+    "interfaces": [
+        {
+        "name": "wg2",
+        "public_key": "DnF7Mwjbz8Whmb+tX8rCHgqYrakEpeGZVMtXfHOHVm0=",
+        "private_key": "",
+        "listen_port": 54324,
+        "address": "",
+        "peers": [
+            {
+            "public_key": "qck6YLr1mk2XzCYP6MAHf+Ynb8wPNjcrlWVyb2Rppwk=",
+            "allowed_ips": "0.0.0.0/0",
+            "persistent_keepalive": "every 10 seconds",
+            "endpoint": "34.219.225.131:54322"
+            }
+        ]
+        }
+    ]
+    }
+    """
+    r = requests.get(f"{URL}wg/show")
+    # should return 200
+    assert r.ok()
+    # should contain JSON
+    assert r.json()
+    result = r.json()
+    # JSON result should contain an "interfaces" field
+    interfaces = result.get("interfaces", None)
+    assert interfaces is not None
+    
 
 def test_wg_show_interfaces():
     assert False
