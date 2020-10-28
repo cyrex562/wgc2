@@ -96,10 +96,9 @@ def test_wg_show_interface(make_interface):
     r = requests.get(f"{URL}/wg/show/{ifc_name}")
     assert r.ok
     result = r.json()
+    # {'name': 'test123', 'public_key': 'Ah6OUzygAvG78nIyMlN8+tIOeZmKQ2prKWtK6i7KgyI=', 'private_key': '', 'listen_port': 51111, 'address': '', 'peers': []}
     print(f"result_json={result}")
-    interfaces = result.get("interfaces", None)
-    assert interfaces is not None
-    assert interfaces[0]["name"] == "test123"
+    assert result["name"] == "test123"
 
 def test_wg_show_public_key():
     assert False
