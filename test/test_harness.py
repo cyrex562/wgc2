@@ -104,7 +104,9 @@ def add_peer(ifc_name: str, peer: Peer) -> Interface:
         "allowed_ips": peer.allowed_ips,
         "persistent_keepalive": peer.persistent_keepalive,
     })
-    return process_ifc_json(r.json())
+    result = r.json()
+    print(f"result={r}, json={result}")
+    return process_ifc_json(result)
 
 
 
