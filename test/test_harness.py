@@ -106,7 +106,7 @@ def add_peer(ifc_name: str, peer: Peer) -> Interface:
         "persistent_keepalive": peer.persistent_keepalive,
     })
     result = r.json()
-    print(f"result={r}, json={result}")
+    print(f"add peer result json={result}")
     return process_ifc_json(result)
 
 
@@ -343,6 +343,7 @@ def test_wg_add_remove_peer(make_interface):
     fake_peer: Peer = gen_fake_peer()
     ifc_name = make_interface.name
     pre_interface: Interface = add_peer(ifc_name, fake_peer)
+    print(f"pre_interface={pre_interface}")
     assert len(pre_interface.peers) > 0
 
     post_interface: Interface = remove_peer(ifc_name, fake_peer.public_key)
