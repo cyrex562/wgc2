@@ -691,7 +691,7 @@ pub fn wg_set_fwmark(ifc_name: &str, fwmark: &str) -> Result<(), MultiError> {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct WgSetPeerParameters {
+pub struct WgPeerParameters {
     pub public_key: String,
     pub remove: Option<bool>,
     pub preshared_key: Option<String>,
@@ -701,11 +701,11 @@ pub struct WgSetPeerParameters {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct WgSetParameters {
+pub struct WgInterfaceParameters {
     pub listen_port: Option<u16>,
     pub private_key: Option<String>,
     pub fwmark: Option<String>,
-    pub peer: Option<WgSetPeerParameters>,
+    pub peer: Option<WgPeerParameters>,
 }
 
 pub fn wg_set_peer_remove(ifc_name: &str, peer: &str) -> Result<(), MultiError> {
@@ -814,7 +814,7 @@ pub fn wg_set_peer_psk(ifc_name: &str, peer: &str, psk: &str) -> Result<(), Mult
     }
 }
 
-pub fn wg_set_peer(ifc_name: &str, params: &WgSetPeerParameters) -> Result<(), MultiError> {
+pub fn wg_set_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), MultiError> {
     let peer = params.public_key.as_str();
     if params.remove.is_some() {
         if params.remove.unwrap() {
@@ -845,7 +845,7 @@ pub fn wg_set_peer(ifc_name: &str, params: &WgSetPeerParameters) -> Result<(), M
 ///
 ///
 ///
-pub fn wg_set(ifc_name: &str, params: &WgSetParameters) -> Result<(), MultiError> {
+pub fn wg_set(ifc_name: &str, params: &WgInterfaceParameters) -> Result<(), MultiError> {
     if params.listen_port.is_some() {
         wg_set_listen_port(
             ifc_name,
@@ -861,6 +861,34 @@ pub fn wg_set(ifc_name: &str, params: &WgSetParameters) -> Result<(), MultiError
         wg_set_fwmark(ifc_name, fwmark.as_str())?;
     }
     if params.peer.is_some() {}
+
+    Ok(())
+}
+
+///
+///
+///
+pub fn wg_set_peer_public_key(ifc_name: &str, public_key: &str) -> Result<(), MultiError> {
+    let _out = run_command("wg", &vec!["set", ifc_name, "peer", public_key], None)?;
+    Ok(())
+}
+
+///
+///
+///
+pub fn wg_add_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), MultiError> {
+    wg_set_peer_public_key(ifc_name, params.public_key.as_str())?;
+
+    wg_set_peer(ifc_name, params)?;
+
+    Ok(())
+}
+
+///
+///
+///
+pub fn wg_remove_peer(ifc_name: &str, params: &WgKey) -> Result<(), MultiError> {
+    wg_set_peer_remove(ifc_name, params.key.as_str())?;
 
     Ok(())
 }

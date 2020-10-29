@@ -13,7 +13,12 @@ use actix_web::{
     App, HttpResponse, HttpServer, Responder,
 };
 use clap::{Arg, ArgMatches};
-use wg_endpoints::{handle_create_wg_interface, handle_delete_wg_interface, handle_wg_set, handle_wg_show, handle_wg_show_interface, handle_wg_show_interfaces, wg_genkey, wg_genpsk, wg_pubkey, wg_show_ifc_element, wg_showconf_ifc};
+use wg_endpoints::{
+    handle_create_wg_interface, handle_delete_wg_interface, handle_wg_add_peer,
+    handle_wg_remove_peer, handle_wg_set, handle_wg_show, handle_wg_show_interface,
+    handle_wg_show_interfaces, wg_genkey, wg_genpsk, wg_pubkey, wg_show_ifc_element,
+    wg_showconf_ifc,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct AppContext {
@@ -99,7 +104,12 @@ async fn main() -> std::result::Result<(), MultiError> {
                     "/interface/{interface}",
                     web::delete().to(handle_delete_wg_interface),
                 )
-                .route("/set/{interface}", web::put().to(handle_wg_set)),
+                .route("/set/{interface}", web::put().to(handle_wg_set))
+                .route("/{interface}/peer", web::post().to(handle_wg_add_peer))
+                .route(
+                    "/{interface}/peer",
+                    web::delete().to(handle_wg_remove_peer),
+                ),
         )
         // .service(
         //     web::scope("/api/v1/")

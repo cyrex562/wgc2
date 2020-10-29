@@ -1,26 +1,44 @@
+from test.test_schema import Interface, Key, Peer
 from test.test_settings import URL
 import requests
-from typing import Tuple
+from typing import List, Tuple, Dict
 from requests import Response
 import pytest
+import random
+import jsonpickle
+
+
+def process_ifc_json(ifc_json: Dict) -> Interface:
+    peers = []
+    for p_json in ifc_json["peers"]:
+        peers.append(Peer(public_key=p_json["public_key"],
+            allowed_ips=p_json["allowed_ips"],
+            persistent_keepalive=p_json["persistent_keepalive"],
+            endpoint=p_json["endpoint"]))
+    return Interface(name=ifc_json["name"], 
+        public_key=ifc_json["public_key"],
+        private_key=ifc_json["private_key"],
+        listen_port=ifc_json["listen_port"],
+        address=ifc_json["address"],
+        peers=peers)
+
 
 def create_interface(
-    ifc_name: str = "test0", 
-    address: str = "192.0.2.2/32", 
-    listen_port: int = 51111, 
-    set_link_up: bool = False, 
+    ifc_name: str = "test0",
+    address: str = "192.0.2.2/32",
+    listen_port: int = 51111,
+    set_link_up: bool = False,
     persist: bool = False
-    ) -> Tuple[str, Response]:
+) -> Interface:
     r = requests.post(
-        f"{URL}/wg/interface", 
-        json={"ifc_name": ifc_name, 
-        "address": address, 
-        "listen_port": listen_port, 
-        "set_link_up": set_link_up, 
-        "persist": persist})
-    print(f"create ifc result={r}")
+        f"{URL}/wg/interface",
+        json={"ifc_name": ifc_name,
+              "address": address,
+              "listen_port": listen_port,
+              "set_link_up": set_link_up,
+              "persist": persist})
+    return process_ifc_json(r.json())
 
-    return r.json()
 
 def delete_interface(ifc_name: str) -> bool:
     r = requests.delete(
@@ -32,8 +50,8 @@ def delete_interface(ifc_name: str) -> bool:
 
 @pytest.fixture()
 def make_interface():
-    r_json = create_interface(ifc_name="test123")
-    yield r_json
+    interface = create_interface(ifc_name="test123")
+    yield interface
     delete_interface(ifc_name="test123")
 
 
@@ -47,15 +65,55 @@ def get_private_key(ifc_name: str) -> str:
     res = r.json()
     return res["private_key"]
 
+
 def get_listen_port(ifc_name: str) -> int:
     r = requests.get(f"{URL}/wg/show/{ifc_name}/listen-port")
     res = r.json()
     return res["listen_port"]
 
+
 def get_fwmark(ifc_name: str) -> str:
     r = requests.get(f"{URL}/wg/show/{ifc_name}/fwmark")
     res = r.json()
     return res["fwmark"]
+
+def get_public_key(private_key: str) -> Key:
+    r = requests.post(f"{URL}/wg/pubkey",
+    json={
+        "key": private_key
+    })
+    return Key(key=r.json()["key"])
+
+def gen_fake_peer() -> Peer:
+    private_key = gen_private_key()
+    public_key = get_public_key(private_key).key
+    endpoint = f"198.51.100.{random.randrange(1,254,1)}"
+    persistent_keepalive = random.randrange(5, 60, 1)
+    allowed_ips = f"{endpoint}/32"
+
+    return Peer(private_key, public_key, endpoint, persistent_keepalive, allowed_ips)
+
+
+
+
+def add_peer(ifc_name: str, peer: Peer) -> Interface:
+    r = requests.post(f"{URL}/interface/{ifc_name}/peer",
+    json={
+        "public_key": peer.public_key,
+        "endpoint": peer.endpoint,
+        "allowed_ips": peer.allowed_ips,
+        "persistent_keepalive": peer.persistent_keepalive,
+    })
+    return process_ifc_json(r.json())
+
+
+
+def remove_peer(ifc_name: str, peer: str) -> Interface:
+    r = requests.delete(f"{URL}/interface/{ifc_name}/peer",
+    json={
+        "key": peer
+    })
+    return process_ifc_json(r.json())
 
 
 def test_wg_show():
@@ -88,7 +146,7 @@ def test_wg_show():
     # JSON result should contain an "interfaces" field
     interfaces = result.get("interfaces", None)
     assert interfaces is not None
-    
+
 
 def test_wg_show_interfaces():
     """
@@ -106,14 +164,15 @@ def test_wg_show_interfaces():
     interfaces = result.get("interfaces", None)
     assert interfaces is not None
 
+
 def test_create_delete_wg_interface():
-    result_json = create_interface(ifc_name="test123")
-    assert result_json["name"] == "test123"
-    assert result_json.get("name", None) is not None
+    interface: Interface = create_interface(ifc_name="test123")
+    assert interface.name == "test123"
     assert delete_interface(ifc_name="test123") is True
 
+
 def test_wg_show_interface(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     r = requests.get(f"{URL}/wg/show/{ifc_name}")
     assert r.ok
     result = r.json()
@@ -121,78 +180,89 @@ def test_wg_show_interface(make_interface):
     print(f"result_json={result}")
     assert result["name"] == "test123"
 
+
 def test_wg_show_public_key(make_interface):
-    ifc_name = make_interface["name"]
-    exp_public_key = make_interface["public_key"]
+    ifc_name = make_interface.name
+    exp_public_key = make_interface.public_key
     r = requests.get(f"{URL}/wg/show/{ifc_name}/public-key")
     result = r.json()
     assert result["public_key"] == exp_public_key
 
+
 def test_wg_show_private_key(make_interface):
-    ifc_name = make_interface["name"]
-    exp_private_key = make_interface["private_key"]
+    ifc_name = make_interface.name
+    exp_private_key = make_interface.private_key
     r = requests.get(f"{URL}/wg/show/{ifc_name}/private-key")
     result = r.json()
     assert result["private_key"] == exp_private_key
 
+
 def test_wg_show_listen_port(make_interface):
-    ifc_name = make_interface["name"]
-    exp_listen_port = make_interface["listen_port"]
+    ifc_name = make_interface.name
+    exp_listen_port = make_interface.listen_port
     r = requests.get(f"{URL}/wg/show/{ifc_name}/listen-port")
     result = r.json()
     assert result["listen_port"] == exp_listen_port
 
+
 def test_wg_show_fwmark(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     exp_fwmark = "off"
     r = requests.get(f"{URL}/wg/show/{ifc_name}/fwmark")
     result = r.json()
     assert result["fwmark"] == exp_fwmark
 
+
 def test_wg_show_peers(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     peers = []
     r = requests.get(f"{URL}/wg/show/{ifc_name}/peers")
     result = r.json()
     assert len(result["peers"]) == len(peers)
 
+
 def test_wg_show_endpoints(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     endpoints = []
     r = requests.get(f"{URL}/wg/show/{ifc_name}/endpoints")
     result = r.json()
     assert len(result["endpoints"]) == len(endpoints)
 
+
 def test_wg_show_allowed_ips(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     allowed_ips = []
     r = requests.get(f"{URL}/wg/show/{ifc_name}/allowed-ips")
     result = r.json()
     assert len(result["allowed_ips"]) == len(allowed_ips)
 
+
 def test_wg_show_latest_handshakes(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     latest_handshakes = []
     r = requests.get(f"{URL}/wg/show/{ifc_name}/latest-handshakes")
     result = r.json()
     assert len(result["latest_handshakes"]) == len(latest_handshakes)
 
+
 def test_wg_show_persistent_keepalive(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     persistent_keepalives = []
     r = requests.get(f"{URL}/wg/show/{ifc_name}/persistent-keepalive")
     result = r.json()
     assert len(result["persistent_keepalives"]) == len(persistent_keepalives)
 
+
 def test_wg_show_transfer(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     transfers = []
     r = requests.get(f"{URL}/wg/show/{ifc_name}/transfer")
     result = r.json()
     assert len(result["transfers"]) == len(transfers)
 
+
 def test_wg_showconf(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     r = requests.get(f"{URL}/wg/showconf/{ifc_name}")
     file_content = r.text
     print(f"downloaded conf:\n{file_content}\n")
@@ -203,15 +273,18 @@ def test_wg_showconf(make_interface):
     assert "ListenPort = " in file_content
     assert "PrivateKey = " in file_content
 
+
 def test_wg_genkey():
     r = requests.get(f"{URL}/wg/genkey")
     private = r.json()["key"]
     assert len(private) > 0
 
+
 def test_wg_genpsk():
     r = requests.get(f"{URL}/wg/genpsk")
     psk = r.json()["key"]
     assert len(psk) > 0
+
 
 def test_wg_pubkey():
     private_key = gen_private_key()
@@ -220,81 +293,96 @@ def test_wg_pubkey():
     pub_key = result["key"]
     assert len(pub_key) > 0
 
+
 def test_wg_set_private_key(make_interface):
-    ifc_name = make_interface["name"]
-    pre_private_key = make_interface["private_key"]
+    ifc_name = make_interface.name
+    pre_private_key = make_interface.private_key
     new_private_key = gen_private_key()
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
-    json={
-        "private_key": new_private_key
-    })
+                     json={
+                         "private_key": new_private_key
+                     })
     assert r.ok
     post_private_key = get_private_key(ifc_name)
     assert new_private_key == post_private_key
     assert pre_private_key != post_private_key
 
+
 def test_wg_set_listen_port(make_interface):
-    ifc_name = make_interface["name"]
-    pre_listen_port = make_interface["listen_port"]
+    ifc_name = make_interface.name
+    pre_listen_port = make_interface.listen_port
     new_listen_port = 52222
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
-    json={
-        "listen_port": new_listen_port
-    })
+                     json={
+                         "listen_port": new_listen_port
+                     })
     assert r.ok
     post_listen_port = get_listen_port(ifc_name)
     assert new_listen_port == post_listen_port
     assert pre_listen_port != post_listen_port
 
+
 def test_wg_set_fwmark(make_interface):
-    ifc_name = make_interface["name"]
+    ifc_name = make_interface.name
     pre_fwmark = "off"
-    new_fwmark ="0x12345678"
+    new_fwmark = "0x12345678"
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
-    json={
-        "fwmark": new_fwmark
-    })
+                     json={
+                         "fwmark": new_fwmark
+                     })
     assert r.ok
     post_fwmark = get_fwmark(ifc_name)
     assert new_fwmark == post_fwmark
     assert pre_fwmark != post_fwmark
 
-def test_wg_add_peer():
-    assert False
+
+def test_wg_add_remove_peer(make_interface):
+    fake_peer: Peer = gen_fake_peer()
+    ifc_name = make_interface.name
+    pre_interface: Interface = add_peer(ifc_name, fake_peer)
+    assert len(pre_interface.peers) > 0
+
+    post_interface: Interface = remove_peer(ifc_name, fake_peer.public_key)
+    assert len(post_interface.peers) == 0
 
 def test_wg_remove_peer():
     assert False
 
+
 def test_wg_set_peer_remove():
     assert False
+
 
 def test_wg_set_peer_endpoint():
     assert False
 
+
 def test_wg_set_peer_allowed_ips():
     assert False
 
+
 def test_wg_set_peer_persistent_keepalive():
     assert False
+
 
 def test_wg_set_peer_psk():
     assert False
 
 
-
 def test_wg_setconf_peer():
     assert False
+
 
 def test_wg_addconf():
     assert False
 
+
 def test_wg_syncconf():
     assert False
 
+
 def test_wg_import_config():
     assert False
-
-
 
 
 # def check_create_interface(app_ctx: AppContext) -> bool:
@@ -325,7 +413,7 @@ def test_wg_import_config():
 #     parser.add_argument("--address","-a", required=True)
 #     args = parser.parse_args()
 #     test_to_run: str = args.test.lower()
-    
+
 #     if test_to_run == "all":
 #         for check in ALL_CHECKS.values():
 #             result = check()

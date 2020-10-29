@@ -12,8 +12,9 @@ use crate::{
         parse_wg_show_interfaces, parse_wg_show_latest_handshakes, parse_wg_show_listen_port,
         parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive,
         parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key,
-        parse_wg_show_transfer, wg_set, wg_show_interface, wg_showconf, WgCreateInterfaceRequest,
-        WgKey, WgSetParameters, WgShowAll, WgShowInterfaces,
+        parse_wg_show_transfer, wg_add_peer, wg_remove_peer, wg_set, wg_show_interface,
+        wg_showconf, WgCreateInterfaceRequest, WgInterfaceParameters, WgKey, WgPeerParameters,
+        WgShowAll, WgShowInterfaces,
     },
 };
 
@@ -354,7 +355,7 @@ pub async fn handle_delete_wg_interface(path: web::Path<String>) -> impl Respond
 ///
 pub async fn handle_wg_set(
     path: web::Path<String>,
-    req: web::Json<WgSetParameters>,
+    req: web::Json<WgInterfaceParameters>,
 ) -> impl Responder {
     match wg_set(path.as_str(), &req.0) {
         Ok(()) => {
@@ -370,6 +371,58 @@ pub async fn handle_wg_set(
         }
         Err(e) => {
             let msg: String = format!("failed to modify interface: {}", e.to_string());
+            Err(ret_internal_server_error(msg))
+        }
+    }
+}
+
+///
+///
+///
+pub async fn handle_wg_add_peer(
+    path: web::Path<String>,
+    req: web::Json<WgPeerParameters>,
+) -> impl Responder {
+    match wg_add_peer(path.as_str(), &req.0) {
+        Ok(()) => {
+            // todo: get copy of the updated interface
+            match wg_show_interface(path.as_str()) {
+                Ok(result) => Ok(HttpResponse::Ok().json(result)),
+                Err(e) => {
+                    let msg: String =
+                        format!("failed to get interface details, e={}", e.to_string());
+                    Err(ret_internal_server_error(msg))
+                }
+            }
+        }
+        Err(e) => {
+            let msg: String = format!("failed to add peer: {}", e.to_string());
+            Err(ret_internal_server_error(msg))
+        }
+    }
+}
+
+///
+///
+///
+pub async fn handle_wg_remove_peer(
+    path: web::Path<String>,
+    req: web::Json<WgKey>,
+) -> impl Responder {
+    match wg_remove_peer(path.as_str(), &req.0) {
+        Ok(()) => {
+            // todo: get copy of the updated interface
+            match wg_show_interface(path.as_str()) {
+                Ok(result) => Ok(HttpResponse::Ok().json(result)),
+                Err(e) => {
+                    let msg: String =
+                        format!("failed to get interface details, e={}", e.to_string());
+                    Err(ret_internal_server_error(msg))
+                }
+            }
+        }
+        Err(e) => {
+            let msg: String = format!("failed remove peer: {}", e.to_string());
             Err(ret_internal_server_error(msg))
         }
     }
