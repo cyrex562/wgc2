@@ -12,15 +12,15 @@ def process_ifc_json(ifc_json: Dict) -> Interface:
     peers = []
     for p_json in ifc_json["peers"]:
         peers.append(Peer(public_key=p_json["public_key"],
-            allowed_ips=p_json["allowed_ips"],
-            persistent_keepalive=p_json["persistent_keepalive"],
-            endpoint=p_json["endpoint"]))
-    return Interface(name=ifc_json["name"], 
-        public_key=ifc_json["public_key"],
-        private_key=ifc_json["private_key"],
-        listen_port=ifc_json["listen_port"],
-        address=ifc_json["address"],
-        peers=peers)
+                          allowed_ips=p_json["allowed_ips"],
+                          persistent_keepalive=p_json["persistent_keepalive"],
+                          endpoint=p_json["endpoint"]))
+    return Interface(name=ifc_json["name"],
+                     public_key=ifc_json["public_key"],
+                     private_key=ifc_json["private_key"],
+                     listen_port=ifc_json["listen_port"],
+                     address=ifc_json["address"],
+                     peers=peers)
 
 
 def create_interface(
@@ -60,6 +60,7 @@ def gen_private_key() -> str:
     private = r.json()["key"]
     return private
 
+
 def get_private_key(ifc_name: str) -> str:
     r = requests.get(f"{URL}/wg/show/{ifc_name}/private-key")
     res = r.json()
@@ -77,12 +78,14 @@ def get_fwmark(ifc_name: str) -> str:
     res = r.json()
     return res["fwmark"]
 
+
 def get_public_key(private_key: str) -> Key:
     r = requests.post(f"{URL}/wg/pubkey",
-    json={
-        "key": private_key
-    })
+                      json={
+                          "key": private_key
+                      })
     return Key(key=r.json()["key"])
+
 
 def gen_fake_peer() -> Peer:
     private_key = gen_private_key()
@@ -92,30 +95,28 @@ def gen_fake_peer() -> Peer:
     persistent_keepalive = random.randrange(5, 60, 1)
     allowed_ips = f"{ip}/32"
 
-    return Peer(private_key, public_key, endpoint, persistent_keepalive, allowed_ips)
-
-
+    return Peer(private_key, public_key, endpoint,
+                persistent_keepalive, allowed_ips)
 
 
 def add_peer(ifc_name: str, peer: Peer) -> Interface:
     r = requests.post(f"{URL}/wg/interface/{ifc_name}/peer",
-    json={
-        "public_key": peer.public_key,
-        "endpoint": peer.endpoint,
-        "allowed_ips": peer.allowed_ips,
-        "persistent_keepalive": peer.persistent_keepalive,
-    })
+                      json={
+                          "public_key": peer.public_key,
+                          "endpoint": peer.endpoint,
+                          "allowed_ips": peer.allowed_ips,
+                          "persistent_keepalive": peer.persistent_keepalive,
+                      })
     result = r.json()
     print(f"add peer result json={result}")
     return process_ifc_json(result)
 
 
-
 def remove_peer(ifc_name: str, peer: str) -> Interface:
     r = requests.delete(f"{URL}/wg/interface/{ifc_name}/peer",
-    json={
-        "key": peer
-    })
+                        json={
+                            "key": peer
+                        })
     return process_ifc_json(r.json())
 
 
@@ -348,6 +349,7 @@ def test_wg_add_remove_peer(make_interface):
 
     post_interface: Interface = remove_peer(ifc_name, fake_peer.public_key)
     assert len(post_interface.peers) == 0
+
 
 def test_wg_remove_peer():
     assert False
