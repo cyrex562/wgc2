@@ -709,6 +709,7 @@ pub struct WgInterfaceParameters {
 }
 
 pub fn wg_set_peer_remove(ifc_name: &str, peer: &str) -> Result<(), MultiError> {
+    log::debug!("setting peer remove");
     match run_command("wg", &vec!["set", ifc_name, "peer", peer, "remove"], None) {
         Ok(_) => Ok(()),
         Err(e) => {
@@ -728,6 +729,7 @@ pub fn wg_set_peer_allowed_ips(
     peer: &str,
     allowed_ips: &str,
 ) -> Result<(), MultiError> {
+    log::debug!("setting peer allowed ips");
     match run_command(
         "wg",
         &vec!["set", ifc_name, "peer", peer, "allowed-ips", allowed_ips],
@@ -748,6 +750,7 @@ pub fn wg_set_peer_allowed_ips(
 }
 
 pub fn wg_set_peer_endpoint(ifc_name: &str, peer: &str, endpoint: &str) -> Result<(), MultiError> {
+    log::debug!("setting peer endpoint");
     match run_command(
         "wg",
         &vec!["set", ifc_name, "peer", peer, "endpoint", endpoint],
@@ -768,6 +771,7 @@ pub fn wg_set_peer_endpoint(ifc_name: &str, peer: &str, endpoint: &str) -> Resul
 }
 
 pub fn wg_set_peer_keepalive(ifc_name: &str, peer: &str, keepalive: u32) -> Result<(), MultiError> {
+    log::debug!("setting peer keepalive");
     match run_command(
         "wg",
         &vec![
@@ -795,6 +799,7 @@ pub fn wg_set_peer_keepalive(ifc_name: &str, peer: &str, keepalive: u32) -> Resu
 }
 
 pub fn wg_set_peer_psk(ifc_name: &str, peer: &str, psk: &str) -> Result<(), MultiError> {
+    log::debug!("setting peer psk");
     match run_command(
         "wg",
         &vec!["set", ifc_name, "peer", peer, "preshared-key", psk],
@@ -815,6 +820,7 @@ pub fn wg_set_peer_psk(ifc_name: &str, peer: &str, psk: &str) -> Result<(), Mult
 }
 
 pub fn wg_set_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), MultiError> {
+    log::debug!("setting peer config");
     let peer = params.public_key.as_str();
     if params.remove.is_some() {
         if params.remove.unwrap() {
@@ -846,6 +852,7 @@ pub fn wg_set_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), Mult
 ///
 ///
 pub fn wg_set(ifc_name: &str, params: &WgInterfaceParameters) -> Result<(), MultiError> {
+    log::debug!("setting interface config");
     if params.listen_port.is_some() {
         wg_set_listen_port(
             ifc_name,
@@ -869,6 +876,7 @@ pub fn wg_set(ifc_name: &str, params: &WgInterfaceParameters) -> Result<(), Mult
 ///
 ///
 pub fn wg_set_peer_public_key(ifc_name: &str, public_key: &str) -> Result<(), MultiError> {
+    log::debug!("setting peer public key");
     let _out = run_command("wg", &vec!["set", ifc_name, "peer", public_key], None)?;
     Ok(())
 }
@@ -877,6 +885,7 @@ pub fn wg_set_peer_public_key(ifc_name: &str, public_key: &str) -> Result<(), Mu
 ///
 ///
 pub fn wg_add_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), MultiError> {
+    log::debug!("adding peer");
     wg_set_peer_public_key(ifc_name, params.public_key.as_str())?;
 
     wg_set_peer(ifc_name, params)?;
@@ -888,6 +897,7 @@ pub fn wg_add_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), Mult
 ///
 ///
 pub fn wg_remove_peer(ifc_name: &str, params: &WgKey) -> Result<(), MultiError> {
+    log::debug!("removing peer");
     wg_set_peer_remove(ifc_name, params.key.as_str())?;
 
     Ok(())

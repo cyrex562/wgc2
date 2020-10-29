@@ -55,7 +55,7 @@ pub fn run_command(
     stdin: Option<String>,
 ) -> Result<String, MultiError> {
     let output: Output;
-    log::debug!("command={}, args={:?}", command, args);
+    log::debug!("command={}, args=[{:?}]", command, args);
     if stdin.is_some() {
         let mut child = Command::new(command)
             .args(args.as_slice())
@@ -78,7 +78,7 @@ pub fn run_command(
     let stderr_string = String::from_utf8(output.stderr.clone())?;
 
     log::debug!(
-        "output={:?}, stdout={}, stderr={}",
+        "output={:?}, stdout=\"{}\", stderr=\"{}\"",
         output,
         stdout_string,
         stderr_string
@@ -86,7 +86,7 @@ pub fn run_command(
 
     if !stderr_string.is_empty() {
         log::error!(
-            "failed to execute command={}, args={:?}, stderr=\"{}\"",
+            "failed to execute command={}, args=[{:?}], stderr=\"{}\"",
             command,
             args,
             stderr_string
