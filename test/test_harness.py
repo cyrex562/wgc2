@@ -97,7 +97,7 @@ def gen_fake_peer() -> Peer:
 
 
 def add_peer(ifc_name: str, peer: Peer) -> Interface:
-    r = requests.post(f"{URL}/interface/{ifc_name}/peer",
+    r = requests.post(f"{URL}/wg/interface/{ifc_name}/peer",
     json={
         "public_key": peer.public_key,
         "endpoint": peer.endpoint,
@@ -111,7 +111,7 @@ def add_peer(ifc_name: str, peer: Peer) -> Interface:
 
 
 def remove_peer(ifc_name: str, peer: str) -> Interface:
-    r = requests.delete(f"{URL}/interface/{ifc_name}/peer",
+    r = requests.delete(f"{URL}/wg/interface/{ifc_name}/peer",
     json={
         "key": peer
     })
