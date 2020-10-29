@@ -1,3 +1,6 @@
+from typing import List
+
+
 class Peer:
     def __init__(self, private_key: str = "",
                  public_key: str = "",
