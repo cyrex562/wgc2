@@ -87,9 +87,10 @@ def get_public_key(private_key: str) -> Key:
 def gen_fake_peer() -> Peer:
     private_key = gen_private_key()
     public_key = get_public_key(private_key).key
-    endpoint = f"198.51.100.{random.randrange(1,254,1)}:{random.randrange(49152,65535,1)}"
+    ip = f"198.51.100.{random.randrange(1,254,1)}"
+    endpoint = f"{ip}:{random.randrange(49152,65535,1)}"
     persistent_keepalive = random.randrange(5, 60, 1)
-    allowed_ips = f"{endpoint}/32"
+    allowed_ips = f"{ip}/32"
 
     return Peer(private_key, public_key, endpoint, persistent_keepalive, allowed_ips)
 
