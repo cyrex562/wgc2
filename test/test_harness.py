@@ -422,7 +422,7 @@ def test_wg_set_peer_persistent_keepalive(make_interface):
 def test_wg_set_peer_psk(make_interface):
     fake_peer: Peer = gen_fake_peer()
     ifc_name = make_interface.name
-    pre_ifc: Interface = add_peer(ifc_name, fake_peer)
+    add_peer(ifc_name, fake_peer)
     psk = gen_psk()
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
                      json={

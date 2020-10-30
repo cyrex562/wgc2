@@ -1,5 +1,4 @@
 use std::{
-    fmt,
     fs::remove_file,
     fs::{File, OpenOptions},
     io::Write,
@@ -16,40 +15,25 @@ use crate::{
     utils::daemon_reload_systemd,
     utils::disable_systemd_service,
     utils::{rest_failed_systemd, ret_multi_err, run_command, stop_systemd_service},
+    wg_schema::WgInterface,
+    wg_schema::WgPresharedKey,
+    wg_schema::WgShowEndpoints,
+    wg_schema::WgShowFwMark,
+    wg_schema::WgShowListenPort,
+    wg_schema::WgShowPeers,
+    wg_schema::WgShowPresharedKeys,
+    wg_schema::WgShowPrivateKey,
+    wg_schema::{
+        WgAllowedIps, WgEndpoint, WgHandshake, WgInterfaceParameters, WgKey, WgPeer,
+        WgPeerParameters, WgPersistentKeepalive, WgShowAllowedIps, WgShowLatestHandshakes,
+        WgShowPersistentKeepalive, WgShowPublicKey, WgShowTransfer, WgTransfer,
+    },
 };
-use serde::{Deserialize, Serialize};
+
 use tempfile::NamedTempFile;
 
 const WG_DFLT_LISTEN_PORT: u16 = 51820;
 const WG_LNK_TYPE: &str = "wireguard";
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgPeer {
-    pub public_key: String,
-    pub allowed_ips: String,
-    pub persistent_keepalive: String,
-    pub endpoint: String,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgInterface {
-    pub name: String,
-    pub public_key: String,
-    pub private_key: String,
-    pub listen_port: u16,
-    pub address: String,
-    pub peers: Vec<WgPeer>,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowAll {
-    pub interfaces: Vec<WgInterface>,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowInterfaces {
-    pub interfaces: Vec<String>,
-}
 
 pub fn wg_show_interface(ifc_name: &str) -> Result<WgInterface, MultiError> {
     log::debug!("getting interface info for dev={}", ifc_name);
@@ -177,20 +161,10 @@ pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError
 // vJSIFglo+1FhDLRt8j5aYwj0EB4/UatiGBgT2H7qQVo=    910456764       17587575272
 //   vpn-gw-1.aplabs1.net  box-admin  ~ 
 
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowPublicKey {
-    pub public_key: String,
-}
-
 pub fn parse_wg_show_pub_key(output: &str) -> Result<WgShowPublicKey, MultiError> {
     let mut out: WgShowPublicKey = Default::default();
     out.public_key = output.trim().to_string();
     Ok(out)
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowPrivateKey {
-    pub private_key: String,
 }
 
 pub fn parse_wg_show_pvt_key(output: &str) -> Result<WgShowPrivateKey, MultiError> {
@@ -199,20 +173,10 @@ pub fn parse_wg_show_pvt_key(output: &str) -> Result<WgShowPrivateKey, MultiErro
     Ok(out)
 }
 
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowListenPort {
-    pub listen_port: u16,
-}
-
 pub fn parse_wg_show_listen_port(output: &str) -> Result<WgShowListenPort, MultiError> {
     let mut out: WgShowListenPort = Default::default();
     out.listen_port = output.trim().parse::<u16>().unwrap();
     Ok(out)
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowFwMark {
-    pub fwmark: String,
 }
 
 pub fn parse_wg_show_fwmark(output: &str) -> Result<WgShowFwMark, MultiError> {
@@ -221,28 +185,12 @@ pub fn parse_wg_show_fwmark(output: &str) -> Result<WgShowFwMark, MultiError> {
     Ok(out)
 }
 
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowPeers {
-    pub peers: Vec<String>,
-}
-
 pub fn parse_wg_show_peers(output: &str) -> Result<WgShowPeers, MultiError> {
     let mut out: WgShowPeers = Default::default();
     for line in output.lines() {
         out.peers.push(line.trim().to_string())
     }
     Ok(out)
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgPresharedKey {
-    pub peer: String,
-    pub preshared_key: String,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowPresharedKeys {
-    pub preshared_keys: Vec<WgPresharedKey>,
 }
 
 pub fn parse_wg_show_preshared_keys(output: &str) -> Result<WgShowPresharedKeys, MultiError> {
@@ -258,17 +206,6 @@ pub fn parse_wg_show_preshared_keys(output: &str) -> Result<WgShowPresharedKeys,
     Ok(out)
 }
 
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgEndpoint {
-    pub peer: String,
-    pub endpoint: String,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowEndpoints {
-    pub endpoints: Vec<WgEndpoint>,
-}
-
 pub fn parse_wg_show_endpoints(output: &str) -> Result<WgShowEndpoints, MultiError> {
     let mut out: WgShowEndpoints = Default::default();
     for line in output.lines() {
@@ -280,17 +217,6 @@ pub fn parse_wg_show_endpoints(output: &str) -> Result<WgShowEndpoints, MultiErr
         out.endpoints.push(psk);
     }
     Ok(out)
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgAllowedIps {
-    pub peer: String,
-    pub allowed_ips: String,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowAllowedIps {
-    pub allowed_ips: Vec<WgAllowedIps>,
 }
 
 pub fn parse_wg_show_allowed_ips(output: &str) -> Result<WgShowAllowedIps, MultiError> {
@@ -306,17 +232,6 @@ pub fn parse_wg_show_allowed_ips(output: &str) -> Result<WgShowAllowedIps, Multi
     Ok(out)
 }
 
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgHandshake {
-    pub peer: String,
-    pub handshake: String,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowLatestHandshakes {
-    pub latest_handshakes: Vec<WgHandshake>,
-}
-
 pub fn parse_wg_show_latest_handshakes(output: &str) -> Result<WgShowLatestHandshakes, MultiError> {
     let mut out: WgShowLatestHandshakes = Default::default();
     for line in output.lines() {
@@ -328,17 +243,6 @@ pub fn parse_wg_show_latest_handshakes(output: &str) -> Result<WgShowLatestHands
         out.latest_handshakes.push(psk);
     }
     Ok(out)
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgPersistentKeepalive {
-    pub peer: String,
-    pub persistent_keepalive: String,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowPersistentKeepalive {
-    pub persistent_keepalives: Vec<WgPersistentKeepalive>,
 }
 
 pub fn parse_wg_show_persistent_keepalive(
@@ -356,18 +260,6 @@ pub fn parse_wg_show_persistent_keepalive(
     Ok(out)
 }
 
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgTransfer {
-    pub peer: String,
-    pub transmitted: u64,
-    pub received: u64,
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgShowTransfer {
-    pub transfers: Vec<WgTransfer>,
-}
-
 pub fn parse_wg_show_transfer(output: &str) -> Result<WgShowTransfer, MultiError> {
     let mut out: WgShowTransfer = Default::default();
     for line in output.lines() {
@@ -380,11 +272,6 @@ pub fn parse_wg_show_transfer(output: &str) -> Result<WgShowTransfer, MultiError
         out.transfers.push(psk);
     }
     Ok(out)
-}
-
-#[derive(Default, Clone, Debug, Deserialize, Serialize)]
-pub struct WgKey {
-    pub key: String,
 }
 
 pub fn parse_wg_keylike(output: &str) -> Result<WgKey, MultiError> {
@@ -520,15 +407,6 @@ pub fn wg_create_pvt_key_file(
     // file.write_all(pvt_key.as_bytes())?;
     out = path;
     Ok(out)
-}
-
-#[derive(Default, Clone, Debug, Serialize, Deserialize)]
-pub struct WgCreateInterfaceRequest {
-    pub ifc_name: String,
-    pub address: String,
-    pub listen_port: u16,
-    pub set_link_up: bool,
-    pub persist: bool,
 }
 
 ///
@@ -691,79 +569,6 @@ pub fn wg_set_fwmark(ifc_name: &str, fwmark: &str) -> Result<(), MultiError> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct WgPeerParameters {
-    pub public_key: String,
-    pub remove: Option<bool>,
-    pub preshared_key: Option<String>,
-    pub endpoint: Option<String>,
-    pub persistent_keepalive: Option<u32>,
-    pub allowed_ips: Option<String>,
-}
-
-impl fmt::Display for WgPeerParameters {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut psk: String = String::from("");
-        if self.preshared_key.is_some() {
-            psk = self.preshared_key.as_ref().unwrap().to_string();
-        }
-
-        let mut ep: String = String::from("");
-        if self.endpoint.is_some() {
-            ep = self.endpoint.as_ref().unwrap().to_string();
-        }
-
-        let mut ap: String = String::from("");
-        if self.allowed_ips.is_some() {
-            ap = self.allowed_ips.as_ref().unwrap().to_string();
-        }
-
-        write!(f, "public_key={}, remove={}, preshared_key={}, endpoint={}, persistent_keepalive={}, allowed_ips={}",
-        &self.public_key,
-        &self.remove.unwrap_or_else(|| { false }),
-        &psk,
-        &ep,
-        &self.persistent_keepalive.unwrap_or_else(|| {0}),
-        &ap)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct WgInterfaceParameters {
-    pub listen_port: Option<u16>,
-    pub private_key: Option<String>,
-    pub fwmark: Option<String>,
-    pub peer: Option<WgPeerParameters>,
-}
-
-impl fmt::Display for WgInterfaceParameters {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut pk: String = String::from("");
-        if self.private_key.is_some() {
-            pk = self.private_key.as_ref().unwrap().to_string();
-        }
-
-        let mut fm: String = String::from("");
-        if self.fwmark.is_some() {
-            fm = self.fwmark.as_ref().unwrap().to_string();
-        }
-
-        let mut p: WgPeerParameters = Default::default();
-        if self.peer.is_some() {
-            p = self.peer.as_ref().unwrap().clone();
-        }
-
-        write!(
-            f,
-            "listen_port={}, private_key={}, fwmark={}, peer={}",
-            self.listen_port.unwrap_or(0),
-            &pk,
-            &fm,
-            &p
-        )
-    }
-}
-
 pub fn wg_set_peer_remove(ifc_name: &str, peer: &str) -> Result<(), MultiError> {
     log::debug!("setting peer remove");
     match run_command("wg", &vec!["set", ifc_name, "peer", peer, "remove"], None) {
@@ -868,7 +673,14 @@ pub fn wg_set_peer_psk(ifc_name: &str, peer: &str, psk: &str) -> Result<(), Mult
 
     match run_command(
         "wg",
-        &vec!["set", ifc_name, "peer", peer, "preshared-key", psk_path.as_str()],
+        &vec![
+            "set",
+            ifc_name,
+            "peer",
+            peer,
+            "preshared-key",
+            psk_path.as_str(),
+        ],
         None,
     ) {
         Ok(_) => Ok(()),

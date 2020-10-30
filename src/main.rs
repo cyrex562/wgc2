@@ -3,6 +3,7 @@ pub mod iproute2_support;
 pub mod multi_error;
 pub mod utils;
 pub mod wg_endpoints;
+pub mod wg_schema;
 pub mod wg_support;
 
 use crate::multi_error::MultiError;

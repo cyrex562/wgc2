@@ -6,6 +6,10 @@ use tempfile::NamedTempFile;
 
 use crate::{
     utils::{ret_internal_server_error, run_command},
+    wg_schema::{
+        WgCreateInterfaceRequest, WgInterfaceParameters, WgKey, WgPeerParameters, WgShowAll,
+        WgShowInterfaces,
+    },
     wg_support::{
         create_wg_interface, create_wg_private_key, delete_wg_interface, gen_wg_public_key,
         parse_wg_keylike, parse_wg_show_allowed_ips, parse_wg_show_endpoints, parse_wg_show_fwmark,
@@ -13,8 +17,7 @@ use crate::{
         parse_wg_show_output, parse_wg_show_peers, parse_wg_show_persistent_keepalive,
         parse_wg_show_preshared_keys, parse_wg_show_pub_key, parse_wg_show_pvt_key,
         parse_wg_show_transfer, wg_add_peer, wg_remove_peer, wg_set, wg_show_interface,
-        wg_showconf, WgCreateInterfaceRequest, WgInterfaceParameters, WgKey, WgPeerParameters,
-        WgShowAll, WgShowInterfaces,
+        wg_showconf,
     },
 };
 
