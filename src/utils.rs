@@ -77,12 +77,12 @@ pub fn run_command(
     let stdout_string = String::from_utf8(output.stdout.clone())?;
     let stderr_string = String::from_utf8(output.stderr.clone())?;
 
-    log::debug!(
-        "output={:?}, stdout=\"{}\", stderr=\"{}\"",
-        output,
-        stdout_string,
-        stderr_string
-    );
+    // log::debug!(
+    //     "output={:?}, stdout=\"{}\", stderr=\"{}\"",
+    //     output,
+    //     stdout_string,
+    //     stderr_string
+    // );
 
     if !stderr_string.is_empty() {
         log::error!(

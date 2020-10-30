@@ -132,10 +132,13 @@ pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError
                     line_num += 1;
                 }
 
+                // log::debug!("peer={:?}", &peer);
+
                 ifc.peers.push(peer);
             }
         }
 
+        log::debug!("ifc={:?}", &ifc);
         out.push(ifc);
     }
 

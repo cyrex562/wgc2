@@ -362,7 +362,6 @@ pub async fn handle_wg_set(
 ) -> impl Responder {
     match wg_set(path.as_str(), &req.0) {
         Ok(()) => {
-            // todo: get copy of the updated interface
             match wg_show_interface(path.as_str()) {
                 Ok(result) => Ok(HttpResponse::Ok().json(result)),
                 Err(e) => {
