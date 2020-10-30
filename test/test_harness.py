@@ -381,11 +381,21 @@ def test_wg_set_peer_endpoint(make_interface):
                      })
     post_ifc = process_ifc_json(r.json())
     assert post_ifc.peers[0].endpoint != pre_interface.peers[0].endpoint
-    assert False
 
 
 def test_wg_set_peer_allowed_ips():
-    assert False
+    fake_peer: Peer = gen_fake_peer()
+    ifc_name = make_interface.name
+    pre_ifc: Interface = add_peer(ifc_name, fake_peer)
+    r = requests.put(f"{URL}/wg/set/{ifc_name}",
+        json={
+            "peer": {
+                "public_key": fake_peer.public_key,
+                "allowed_ips": f"{fake_peer.allowed_ips},10.239.239.0/24"
+            }
+        })
+    post_ifc = process_ifc_json(r.json())
+    assert post_ifc.peers[0].allowed_ips != pre_ifc.peers[0].allowed_ips   
 
 
 def test_wg_set_peer_persistent_keepalive():
