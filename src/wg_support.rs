@@ -123,6 +123,11 @@ pub fn parse_wg_show_output(output: &str) -> Result<Vec<WgInterface>, MultiError
                             line.trim().strip_prefix("persistent keepalive: ").unwrap();
                         peer.persistent_keepalive = keepalive_str.trim().to_string();
                     }
+                    // preshared key:
+                    else if line.find("preshared key").is_some() {
+                        let preshared_key_str = line.trim().strip_prefix("preshared key: ").unwrap();
+                        peer.preshared_key = preshared_key_str.trim().to_string(); 
+                    }
 
                     line_num += 1;
                 }

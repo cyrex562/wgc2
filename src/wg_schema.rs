@@ -7,6 +7,7 @@ pub struct WgPeer {
     pub allowed_ips: String,
     pub persistent_keepalive: String,
     pub endpoint: String,
+    pub preshared_key: String,
 }
 
 #[derive(Default, Clone, Debug, Deserialize, Serialize)]
