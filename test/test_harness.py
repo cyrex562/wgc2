@@ -59,6 +59,12 @@ def gen_private_key() -> str:
     return private
 
 
+def gen_psk() -> str:
+    r = requests.get(f"{URL}/wg/gepsk")
+    psk = r.json()["key"]
+    return psk
+
+
 def get_private_key(ifc_name: str) -> str:
     r = requests.get(f"{URL}/wg/show/{ifc_name}/private-key")
     res = r.json()
@@ -388,14 +394,14 @@ def test_wg_set_peer_allowed_ips(make_interface):
     ifc_name = make_interface.name
     pre_ifc: Interface = add_peer(ifc_name, fake_peer)
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
-        json={
-            "peer": {
-                "public_key": fake_peer.public_key,
-                "allowed_ips": f"{fake_peer.allowed_ips},10.239.239.0/24"
-            }
-        })
+                     json={
+                         "peer": {
+                             "public_key": fake_peer.public_key,
+                             "allowed_ips": f"{fake_peer.allowed_ips},10.239.239.0/24"
+                         }
+                     })
     post_ifc = process_ifc_json(r.json())
-    assert post_ifc.peers[0].allowed_ips != pre_ifc.peers[0].allowed_ips   
+    assert post_ifc.peers[0].allowed_ips != pre_ifc.peers[0].allowed_ips
 
 
 def test_wg_set_peer_persistent_keepalive(make_interface):
@@ -403,18 +409,30 @@ def test_wg_set_peer_persistent_keepalive(make_interface):
     ifc_name = make_interface.name
     pre_ifc: Interface = add_peer(ifc_name, fake_peer)
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
-    json={
-        "peer": {
-            "public_key": fake_peer.public_key,
-            "persistent_keepalive": 123,
-        }
-    })
+                     json={
+                         "peer": {
+                             "public_key": fake_peer.public_key,
+                             "persistent_keepalive": 123,
+                         }
+                     })
     post_ifc = process_ifc_json(r.json())
     assert post_ifc.peers[0].persistent_keepalive != pre_ifc.peers[0].persistent_keepalive
 
 
 def test_wg_set_peer_psk():
-    assert False
+    fake_peer: Peer = gen_fake_peer()
+    ifc_name = make_interface.name
+    pre_ifc: Interface = add_peer(ifc_name, fake_peer)
+    psk = gen_psk()
+    r = requests.put(f"{URL}/wg/set/{ifc_name}",
+                     json={
+                         "peer": {
+                             "public_key": fake_peer.public_key,
+                             "preshared_key": psk,
+                         }
+                     })
+    post_ifc = process_ifc_json(r.json())
+    assert post_ifc.peers[0].preshared_key == psk
 
 
 def test_wg_setconf():
