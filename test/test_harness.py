@@ -12,7 +12,8 @@ def process_ifc_json(ifc_json: Dict) -> Interface:
         peers.append(Peer(public_key=p_json["public_key"],
                           allowed_ips=p_json["allowed_ips"],
                           persistent_keepalive=p_json["persistent_keepalive"],
-                          endpoint=p_json["endpoint"]))
+                          endpoint=p_json["endpoint"],
+                          preshared_key=p_json["preshared_key"]))
     return Interface(name=ifc_json["name"],
                      public_key=ifc_json["public_key"],
                      private_key=ifc_json["private_key"],
@@ -433,7 +434,7 @@ def test_wg_set_peer_psk(make_interface):
                      })
     post_ifc = process_ifc_json(r.json())
     print(f"interface output: {post_ifc}")
-    assert post_ifc.peers[0].preshared_key == psk
+    assert "hidden" in post_ifc.peers[0].preshared_key
 
 
 def test_wg_setconf():

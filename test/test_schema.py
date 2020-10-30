@@ -6,12 +6,14 @@ class Peer:
                  public_key: str = "",
                  endpoint: str = "",
                  persistent_keepalive=25,
-                 allowed_ips=""):
+                 allowed_ips="",
+                 preshared_key=""):
         self.private_key = private_key
         self.public_key = public_key
         self.endpoint = endpoint
         self.persistent_keepalive = persistent_keepalive
         self.allowed_ips = allowed_ips
+        self.preshared_key = preshared_key
 
     def __repr__(self):
         return f"private_key={self.private_key}, public_key={self.public_key}, endpoint={self.endpoint}, persistent_keepalive={self.persistent_keepalive}, allowed_ips={self.allowed_ips}"
