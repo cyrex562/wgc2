@@ -432,6 +432,7 @@ def test_wg_set_peer_psk(make_interface):
                          }
                      })
     post_ifc = process_ifc_json(r.json())
+    print(f"interface output: {post_ifc}")
     assert post_ifc.peers[0].preshared_key == psk
 
 
