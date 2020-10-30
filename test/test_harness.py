@@ -368,9 +368,9 @@ def test_wg_set_peer_remove(make_interface):
     assert len(post_interface.peers) == 0
 
 
-def test_wg_set_peer_endpoint():
+def test_wg_set_peer_endpoint(make_interface):
     fake_peer: Peer = gen_fake_peer()
-    ifc_name = make_interface.ifc_name
+    ifc_name = make_interface.name
     pre_interface: Interface = add_peer(ifc_name, fake_peer)
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
                      json={
