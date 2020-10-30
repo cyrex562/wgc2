@@ -856,9 +856,19 @@ pub fn wg_set_peer_keepalive(ifc_name: &str, peer: &str, keepalive: u32) -> Resu
 
 pub fn wg_set_peer_psk(ifc_name: &str, peer: &str, psk: &str) -> Result<(), MultiError> {
     log::debug!("setting peer psk");
+
+    let psk_path = format!("/tmp/peer_{}_psk", &peer[..8]);
+    let mut file = OpenOptions::new()
+        .read(false)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(&psk_path)?;
+    file.write_all(psk.as_bytes())?;
+
     match run_command(
         "wg",
-        &vec!["set", ifc_name, "peer", peer, "preshared-key", psk],
+        &vec!["set", ifc_name, "peer", peer, "preshared-key", psk_path.as_str()],
         None,
     ) {
         Ok(_) => Ok(()),

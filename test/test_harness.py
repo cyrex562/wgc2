@@ -60,7 +60,7 @@ def gen_private_key() -> str:
 
 
 def gen_psk() -> str:
-    r = requests.get(f"{URL}/wg/gepsk")
+    r = requests.get(f"{URL}/wg/genpsk")
     psk = r.json()["key"]
     return psk
 
