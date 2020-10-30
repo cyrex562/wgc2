@@ -1,4 +1,10 @@
-use std::{fs::remove_file, fs::{File, OpenOptions}, io::Write, path::Path, fmt};
+use std::{
+    fmt,
+    fs::remove_file,
+    fs::{File, OpenOptions},
+    io::Write,
+    path::Path,
+};
 
 use crate::{
     iproute2_support::ip_addr_add,
@@ -732,7 +738,6 @@ pub struct WgInterfaceParameters {
 
 impl fmt::Display for WgInterfaceParameters {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-
         let mut pk: String = String::from("");
         if self.private_key.is_some() {
             pk = self.private_key.as_ref().unwrap().to_string();
@@ -748,11 +753,14 @@ impl fmt::Display for WgInterfaceParameters {
             p = self.peer.as_ref().unwrap().clone();
         }
 
-        write!(f, "listen_port={}, private_key={}, fwmark={}, peer={}",
-        self.listen_port.unwrap_or(0),
-        &pk,
-        &fm,
-        &p)
+        write!(
+            f,
+            "listen_port={}, private_key={}, fwmark={}, peer={}",
+            self.listen_port.unwrap_or(0),
+            &pk,
+            &fm,
+            &p
+        )
     }
 }
 
@@ -900,7 +908,11 @@ pub fn wg_set_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), Mult
 ///
 ///
 pub fn wg_set(ifc_name: &str, params: &WgInterfaceParameters) -> Result<(), MultiError> {
-    log::debug!("setting interface config, ifc_name={}, params={}", ifc_name, params);
+    log::debug!(
+        "setting interface config, ifc_name={}, params={}",
+        ifc_name,
+        params
+    );
     if params.listen_port.is_some() {
         wg_set_listen_port(
             ifc_name,
@@ -915,7 +927,10 @@ pub fn wg_set(ifc_name: &str, params: &WgInterfaceParameters) -> Result<(), Mult
         let fwmark: String = params.fwmark.clone().unwrap();
         wg_set_fwmark(ifc_name, fwmark.as_str())?;
     }
-    if params.peer.is_some() {}
+    if params.peer.is_some() {
+        let peer = params.peer.clone().unwrap();
+        wg_set_peer(ifc_name, &peer)?;
+    }
 
     Ok(())
 }

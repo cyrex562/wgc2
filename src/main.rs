@@ -102,13 +102,16 @@ async fn main() -> std::result::Result<(), MultiError> {
                 .route("/interface", web::post().to(handle_create_wg_interface))
                 .route(
                     "/interface/{interface}",
-                    web::delete().to(handle_delete_wg_interface)
+                    web::delete().to(handle_delete_wg_interface),
                 )
                 .route("/set/{interface}", web::put().to(handle_wg_set))
-                .route("/interface/{interface}/peer", web::post().to(handle_wg_add_peer))
                 .route(
                     "/interface/{interface}/peer",
-                    web::delete().to(handle_wg_remove_peer)
+                    web::post().to(handle_wg_add_peer),
+                )
+                .route(
+                    "/interface/{interface}/peer",
+                    web::delete().to(handle_wg_remove_peer),
                 ),
         )
         // .service(
