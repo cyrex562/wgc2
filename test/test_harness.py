@@ -1,11 +1,9 @@
 from test.test_schema import Interface, Key, Peer
 from test.test_settings import URL
 import requests
-from typing import List, Tuple, Dict
-from requests import Response
+from typing import Dict
 import pytest
 import random
-import jsonpickle
 
 
 def process_ifc_json(ifc_json: Dict) -> Interface:
@@ -85,6 +83,10 @@ def get_public_key(private_key: str) -> Key:
                           "key": private_key
                       })
     return Key(key=r.json()["key"])
+
+
+def gen_endpoint() -> str:
+    return f"198.51.100.{random.randrange(2,254,1)}:{random.randrange(49152,65535,1)}"
 
 
 def gen_fake_peer() -> Peer:
@@ -350,22 +352,35 @@ def test_wg_add_remove_peer(make_interface):
     post_interface: Interface = remove_peer(ifc_name, fake_peer.public_key)
     assert len(post_interface.peers) == 0
 
+
 def test_wg_set_peer_remove(make_interface):
     fake_peer: Peer = gen_fake_peer()
     ifc_name = make_interface.name
-    pre_interface: Interface = add_peer(ifc_name, fake_peer)
+    add_peer(ifc_name, fake_peer)
     r = requests.put(f"{URL}/wg/set/{ifc_name}",
-        json={
-            "peer": {
-                "public_key": fake_peer.public_key,
-                "remove": True,
-            }
-        })
+                     json={
+                         "peer": {
+                             "public_key": fake_peer.public_key,
+                             "remove": True,
+                         }
+                     })
     post_interface = process_ifc_json(r.json())
     assert len(post_interface.peers) == 0
 
 
 def test_wg_set_peer_endpoint():
+    fake_peer: Peer = gen_fake_peer()
+    ifc_name = make_interface.ifc_name
+    pre_interface: Interface = add_peer(ifc_name, fake_peer)
+    r = requests.put(f"{URL}/wg/set/{ifc_name}",
+                     json={
+                         "peer": {
+                             "public_key": fake_peer.public_key,
+                             "endpoint": gen_endpoint()
+                         }
+                     })
+    post_ifc = process_ifc_json(r.json())
+    assert post_ifc.peers[0].endpoint != pre_interface.peers[0].endpoint
     assert False
 
 
