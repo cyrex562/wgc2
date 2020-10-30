@@ -13,7 +13,7 @@ class Peer:
         self.persistent_keepalive = persistent_keepalive
         self.allowed_ips = allowed_ips
 
-    def __str__(self):
+    def __repr__(self):
         return f"private_key={self.private_key}, public_key={self.public_key}, endpoint={self.endpoint}, persistent_keepalive={self.persistent_keepalive}, allowed_ips={self.allowed_ips}"
 
 
@@ -34,7 +34,7 @@ class Interface:
             peers = []
         self.peers = peers
 
-    def __str__(self):
+    def __repr__(self):
         return f"name={self.name}, public_key={self.public_key}, private_key={self.private_key}, listen_port={self.listen_port}, address={self.address}, peers={self.peers}"
 
 
