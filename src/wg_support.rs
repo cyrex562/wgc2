@@ -1,9 +1,4 @@
-use std::{
-    fs::remove_file,
-    fs::{File, OpenOptions},
-    io::Write,
-    path::Path,
-};
+use std::{fs::remove_file, fs::{File, OpenOptions}, io::Write, path::Path, fmt};
 
 use crate::{
     iproute2_support::ip_addr_add,
@@ -700,12 +695,65 @@ pub struct WgPeerParameters {
     pub allowed_ips: Option<String>,
 }
 
+impl fmt::Display for WgPeerParameters {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut psk: String = String::from("");
+        if self.preshared_key.is_some() {
+            psk = self.preshared_key.as_ref().unwrap().to_string();
+        }
+
+        let mut ep: String = String::from("");
+        if self.endpoint.is_some() {
+            ep = self.endpoint.as_ref().unwrap().to_string();
+        }
+
+        let mut ap: String = String::from("");
+        if self.allowed_ips.is_some() {
+            ap = self.allowed_ips.as_ref().unwrap().to_string();
+        }
+
+        write!(f, "public_key={}, remove={}, preshared_key={}, endpoint={}, persistent_keepalive={}, allowed_ips={}",
+        &self.public_key,
+        &self.remove.unwrap_or_else(|| { false }),
+        &psk,
+        &ep,
+        &self.persistent_keepalive.unwrap_or_else(|| {0}),
+        &ap)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct WgInterfaceParameters {
     pub listen_port: Option<u16>,
     pub private_key: Option<String>,
     pub fwmark: Option<String>,
     pub peer: Option<WgPeerParameters>,
+}
+
+impl fmt::Display for WgInterfaceParameters {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+
+        let mut pk: String = String::from("");
+        if self.private_key.is_some() {
+            pk = self.private_key.as_ref().unwrap().to_string();
+        }
+
+        let mut fm: String = String::from("");
+        if self.fwmark.is_some() {
+            fm = self.fwmark.as_ref().unwrap().to_string();
+        }
+
+        let mut p: WgPeerParameters = Default::default();
+        if self.peer.is_some() {
+            p = self.peer.as_ref().unwrap().clone();
+        }
+
+        write!(f, "listen_port={}, private_key={}, fwmark={}, peer={}",
+        self.listen_port.unwrap_or(0),
+        &pk,
+        &fm,
+        &p)
+    }
 }
 
 pub fn wg_set_peer_remove(ifc_name: &str, peer: &str) -> Result<(), MultiError> {
@@ -852,7 +900,7 @@ pub fn wg_set_peer(ifc_name: &str, params: &WgPeerParameters) -> Result<(), Mult
 ///
 ///
 pub fn wg_set(ifc_name: &str, params: &WgInterfaceParameters) -> Result<(), MultiError> {
-    log::debug!("setting interface config");
+    log::debug!("setting interface config, ifc_name={}, params={}", ifc_name, params);
     if params.listen_port.is_some() {
         wg_set_listen_port(
             ifc_name,
