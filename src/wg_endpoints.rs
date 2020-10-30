@@ -363,7 +363,9 @@ pub async fn handle_wg_set(
     match wg_set(path.as_str(), &req.0) {
         Ok(()) => {
             match wg_show_interface(path.as_str()) {
-                Ok(result) => Ok(HttpResponse::Ok().json(result)),
+                Ok(result) => {
+                    log::debug!("interface config changed: {:?}", &result);
+                    Ok(HttpResponse::Ok().json(result))},
                 Err(e) => {
                     let msg: String =
                         format!("failed to get interface details, e={}", e.to_string());
