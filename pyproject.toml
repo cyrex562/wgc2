@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "wgc2"
+version = "0.1.0"
+description = "command and control for wireguard"
+authors = ["cyrex562"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
