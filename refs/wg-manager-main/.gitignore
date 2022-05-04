@@ -1,0 +1,69 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+/dist
+/tmp
+/out-tsc
+/venv
+venv
+# dependencies
+/node_modules
+**node_modules
+**build
+**dist
+**__pycache__
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+testem.log
+/typings
+
+# e2e
+/e2e/*.js
+/e2e/*.map
+
+# System Files
+.DS_Store
+Thumbs.db
+
+docker/__pycache__/
+
+wg_dashboard_backend/__pycache__/
+
+wg_dashboard_frontend/yarn.lock
+
+wg_dashboard_backend/config/server/wg0/clients/4.conf
+
+wg_dashboard_backend/config/server/wg0/clients/5.conf
+
+wg_dashboard_backend/config/server/wg0/clients/6.conf
+
+wg_dashboard_backend/config/server/wg0/clients/7.conf
+
+wg_dashboard_backend/config/server/wg0/wg0.conf
+
+wg-dashboard-py.iml
+
+docker/wg0.conf
+
+wg_dashboard_backend/database.db

@@ -1,0 +1,11 @@
+[Unit]
+Description=Wgc2 web server/application
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/box-admin/wgc2/target/debug/wgc2 -a 10.255.0.1 -p 8999
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,2 +1,5 @@
+/target
 
-gitkraken-amd64.deb
+.idea/workspace.xml
+
+Cargo.lock

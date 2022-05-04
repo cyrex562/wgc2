@@ -1,0 +1,20 @@
+[package]
+name = "wgc2"
+version = "0.1.0"
+authors = ["Josh M. <joshmadden@occamsrazortech.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "3"
+clap = "2"
+serde = { version = "1", features = ["derive"]}
+log = "0.4"
+fern = "0.6"
+regex = "1"
+csv = "1"
+chrono = "0.4"
+actix-files="0.4"
+tempfile="3"
+
